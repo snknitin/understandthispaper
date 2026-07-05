@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beyond Language Modeling: An Exploration of Multimodal Pretraining — equation explainer</title>
+<script>
+window.MathJax = {
+  loader: { load: ['[tex]/html'] },  // the class macro lives here; it is NOT autoloaded
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']],
+         packages: { '[+]': ['html'] } },
+  chtml: { scale: 1.15 }
+};
+</script>
+<script id="mathjax-cdn" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  :root { --border:#e5e7eb; --ink:#111827; --muted:#6b7280; --bg:#f8fafc; --card:#ffffff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  header { padding:16px 24px; background:var(--card); border-bottom:1px solid var(--border); }
+  header h1 { margin:0 0 4px; font-size:18px; }
+  header .meta { color:var(--muted); font-size:13px; }
+  header .meta a { color:#2563eb; text-decoration:none; }
+  main { display:grid; grid-template-columns: 300px 1fr 340px; gap:16px; padding:16px 24px; align-items:start; }
+  .pane { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .pane h2 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  #left .summary { font-size:13.5px; line-height:1.55; color:#374151; }
+  #left .srcbox { margin-top:12px; background:#0f172a; color:#e2e8f0; border-radius:8px; padding:10px 12px;
+                  font-family:ui-monospace, Consolas, monospace; font-size:11.5px; white-space:pre-wrap; word-break:break-word; }
+  #left .loc { margin-top:8px; font-size:12px; color:var(--muted); }
+  #center { position:relative; }
+  #eqname { font-size:15px; font-weight:600; margin-bottom:6px; }
+  #equation { padding:28px 8px; overflow-x:auto; }
+  #center .hint { font-size:12px; color:var(--muted); text-align:center; }
+  [class*="eqspan-"] { border-radius:4px; padding:1px 2px; cursor:pointer; transition: background .12s, box-shadow .12s; }
+  [class*="eqspan-"].hl { background:#fef9c3; box-shadow:0 0 0 2px #fde047; }
+  .card { border:1px solid var(--border); border-left-width:4px; border-radius:8px; padding:10px 12px; margin-bottom:10px; cursor:pointer; transition: background .12s, box-shadow .12s; }
+  .card.hl { background:#fefce8; box-shadow:0 0 0 2px #fde047; }
+  .card-head { display:flex; align-items:center; gap:8px; }
+  .chip { width:12px; height:12px; border-radius:3px; flex:0 0 auto; }
+  .card-label { font-weight:600; font-size:13.5px; }
+  .card-body { margin:6px 0 0; font-size:13px; line-height:1.5; color:#374151; }
+  .aside { margin-top:14px; border-top:1px dashed var(--border); padding-top:12px; font-size:13px; line-height:1.55; color:#374151; }
+  .aside .k { font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:block; margin-bottom:4px; }
+  #bottom { margin:0 24px 24px; }
+  #bottom blockquote { margin:0 0 10px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-left:4px solid #94a3b8; border-radius:8px; font-size:13px; line-height:1.55; }
+  .qloc { color:var(--muted); font-size:12px; margin-left:6px; }
+  .qtag { display:inline-block; margin-left:4px; padding:1px 7px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:11px; cursor:pointer; }
+  .qtag.hl { background:#fde047; color:#713f12; }
+  #conf { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  #confbar { flex:0 0 220px; height:10px; border-radius:999px; background:#e5e7eb; overflow:hidden; }
+  #confbar>div { height:100%; border-radius:999px; background:linear-gradient(90deg,#f59e0b,#22c55e); }
+  #conf .num { font-weight:700; }
+  #conf .notes { font-size:12.5px; color:var(--muted); }
+  table.symbols { width:100%; border-collapse:collapse; font-size:13px; margin-top:4px; }
+  table.symbols td { border-top:1px solid var(--border); padding:8px 6px; vertical-align:top; }
+  td.sym { white-space:nowrap; font-size:14px; }
+  .role { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; white-space:nowrap; }
+  .ground { color:var(--muted); font-size:11.5px; margin-top:3px; font-style:italic; }
+  #callout { position:absolute; display:none; max-width:320px; background:#111827; color:#f9fafb; font-size:12.5px; line-height:1.5; padding:10px 12px; border-radius:8px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  #callout-svg { position:absolute; overflow:visible; pointer-events:none; z-index:49; display:none; }
+  #fallback { display:none; margin:8px 0 0; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:12.5px; color:#991b1b; }
+  @media (max-width: 1100px) { main { grid-template-columns:1fr; } }
+  .eqspan-lamlm { color: #d97706; }
+  .card[data-span="lamlm"] { border-left-color: #d97706; }
+  .eqspan-lm { color: #2563eb; }
+  .card[data-span="lm"] { border-left-color: #2563eb; }
+  .eqspan-lamflow { color: #0891b2; }
+  .card[data-span="lamflow"] { border-left-color: #0891b2; }
+  .eqspan-exp { color: #059669; }
+  .card[data-span="exp"] { border-left-color: #059669; }
+  .eqspan-vpred { color: #7c3aed; }
+  .card[data-span="vpred"] { border-left-color: #7c3aed; }
+  .eqspan-target { color: #dc2626; }
+  .card[data-span="target"] { border-left-color: #dc2626; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Beyond Language Modeling: An Exploration of Multimodal Pretraining</h1>
+  <div class="meta">arXiv:2603.03276 · <a href="https://arxiv.org/abs/2603.03276">https://arxiv.org/abs/2603.03276</a> · generated by equation-visualizer (deterministic renderer — the model wrote the <a href="#spec">spec</a>, not this page)</div>
+</header>
+<main>
+  <section class="pane" id="left">
+    <h2>Paper &amp; source</h2>
+    <div class="summary">FAIR (Meta) + NYU study that trains a single decoder-only transformer from scratch on text and vision together (Transfusion-style), instead of bolting vision onto a pretrained LLM. Key findings: one semantic visual representation (RAE) suffices for both understanding and generation; vision and language data are complementary; world modeling emerges from general pretraining; MoE scales multimodal training efficiently.</div>
+    <div class="loc">Sec. 2.1 (Training and Inference), Eqs. (1)-(3) of the arXiv HTML; expanded by substituting Eqs. (1) and (2) into the mixture objective Eq. (3). LaTeX taken verbatim from the LaTeXML alttext, with the internal sum macro normalized.</div>
+    <div class="srcbox">\mathcal{L} \;=\; \lambda_{\text{LM}} \Big[ -\sum_{i=1}^{n} \log p_{\theta}(x_{i} \mid x_{&lt;i}) \Big] \;+\; \lambda_{\text{flow}} \; \mathbb{E}_{t, z_{0}, \epsilon}\Big[ \lVert v_{\theta}(z_{t}, t, \cdot) - (z_{0} - \epsilon) \rVert_{2}^{2} \Big]</div>
+    <div id="fallback">MathJax failed to load (offline?). The raw LaTeX on the left is the source of truth.</div>
+  </section>
+  <section class="pane" id="center">
+    <h2>Equation</h2>
+    <div id="eqname">Unified multimodal training objective (language modeling + flow matching)</div>
+    <div id="equation">\[\mathcal{L} \;=\; \class{eqspan-lamlm}{\lambda_{\text{LM}}} \Big[ \class{eqspan-lm}{-\sum_{i=1}^{n} \log p_{\theta}(x_{i} \mid x_{&lt;i})} \Big] \;+\; \class{eqspan-lamflow}{\lambda_{\text{flow}}} \; \class{eqspan-exp}{\mathbb{E}_{t, z_{0}, \epsilon}}\Big[ \lVert \class{eqspan-vpred}{v_{\theta}(z_{t}, t, \cdot)} - \class{eqspan-target}{(z_{0} - \epsilon)} \rVert_{2}^{2} \Big]\]</div>
+    <div class="hint">hover or click any colored piece — or a card on the right</div>
+    <div class="aside"><span class="k">Plain English</span>One transformer is graded by two teachers at once. The language teacher scores how well it predicts the next word in text (blue). The vision teacher hands it a partially-smudged image latent and scores how accurately it points back toward the clean image (purple prediction vs. red truth). Two knobs (amber, teal) set how much each grade counts. Training on both simultaneously — rather than starting from a finished LLM — is the paper&#x27;s core experimental choice.</div>
+    <svg id="callout-svg"><line x1="0" y1="0" x2="0" y2="0" stroke="#111827" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+    <div id="callout"></div>
+  </section>
+  <section class="pane" id="right">
+    <h2>What each color means</h2>
+    <div class="card" data-span="lamlm" tabindex="0"><div class="card-head"><span class="chip" style="background:#d97706"></span><span class="card-label">Text loss weight</span></div><p class="card-body">How much the language grade counts. The paper pins this to 1.0 and tunes the vision weight around it.</p></div>
+<div class="card" data-span="lm" tabindex="0"><div class="card-head"><span class="chip" style="background:#2563eb"></span><span class="card-label">Language modeling loss (Eq. 1)</span></div><p class="card-body">Standard next-token prediction on text: for every position, how surprised was the model by the actual next token? Identical to how GPT-style LLMs are trained.</p></div>
+<div class="card" data-span="lamflow" tabindex="0"><div class="card-head"><span class="chip" style="background:#0891b2"></span><span class="card-label">Vision loss weight</span></div><p class="card-body">The knob balancing the vision objective against text, &#x27;chosen to stabilize joint training&#x27;. Non-trivial because the paper finds vision is far more data-hungry than language.</p></div>
+<div class="card" data-span="exp" tabindex="0"><div class="card-head"><span class="chip" style="background:#059669"></span><span class="card-label">Average over noise &amp; time</span></div><p class="card-body">The vision loss is averaged over clean latents from the frozen encoder (z0), Gaussian noise draws (epsilon), and random interpolation times t — the model trains at every level of &#x27;smudge&#x27;.</p></div>
+<div class="card" data-span="vpred" tabindex="0"><div class="card-head"><span class="chip" style="background:#7c3aed"></span><span class="card-label">Predicted velocity (Eq. 2)</span></div><p class="card-body">Given a partially-noised latent z_t, the time t, and the multimodal context, the same transformer predicts which direction to move the latent to make it a real image.</p></div>
+<div class="card" data-span="target" tabindex="0"><div class="card-head"><span class="chip" style="background:#dc2626"></span><span class="card-label">True velocity (target)</span></div><p class="card-body">The straight-line direction from noise (epsilon) to the clean visual latent (z0) — the ground-truth answer the prediction is regressed against.</p></div>
+    <div class="aside"><span class="k">Intuition</span>A student enrolled in two classes with one brain (theta): a writing class — guess the next word of a passage — and a restoration class — shown a half-cleaned painting (z_t) and the clock (t), say which way each brushstroke should move (v_theta), graded against the restorer&#x27;s true stroke (z0 − epsilon). The two lambdas are how much each class counts toward the final GPA. The paper&#x27;s finding: taking both classes together makes you better at each than cramming either alone.</div>
+  </section>
+</main>
+<section id="bottom">
+  <div class="pane">
+    <h2>Why the model reads it this way (grounding)</h2>
+    <div id="conf">
+      <div id="confbar"><div style="width:95%"></div></div>
+      <span class="num">0.95</span>
+      <span class="notes">Assembled from the paper&#x27;s own Eqs. (1)-(3), extracted verbatim from the arXiv HTML LaTeXML alttext (extract_equations.py indices 1, 7, 11). Edits: substituted (1) and (2) into (3) for a single display, normalized the LaTeXML sum macro, dropped trailing punctuation. All grounding quotes are from the surrounding Sec. 2.1 prose.</span>
+    </div>
+    <blockquote>&ldquo;Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.&rdquo; <span class="qloc">Sec. 2.1, before Eq. (1)</span> <span class="qtag" data-span="lm">lm</span></blockquote>
+<blockquote>&ldquo;z_t = (1 - t) epsilon + t z_0. The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.&rdquo; <span class="qloc">Sec. 2.1, before Eq. (2)</span> <span class="qtag" data-span="vpred">vpred</span><span class="qtag" data-span="target">target</span><span class="qtag" data-span="exp">exp</span></blockquote>
+<blockquote>&ldquo;Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives.&rdquo; <span class="qloc">Sec. 2.1, before Eq. (3)</span> <span class="qtag" data-span="lamlm">lamlm</span><span class="qtag" data-span="lamflow">lamflow</span></blockquote>
+<blockquote>&ldquo;...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0...&rdquo; <span class="qloc">Sec. 2.1, after Eq. (3)</span> <span class="qtag" data-span="lamlm">lamlm</span><span class="qtag" data-span="lamflow">lamflow</span></blockquote>
+    <h2 style="margin-top:16px">Symbol map</h2>
+    <table class="symbols"><tr><td class="sym">\(\theta\)</td><td>Parameters of the single shared decoder-only transformer, trained from scratch on both modalities at once.<div class=ground>&ldquo;We train a single, autoregressive, decoder-only Transformer backbone from scratch (Sec. 2).&rdquo;</div></td><td><span class="role" style="background:#7c3aed1a;color:#7c3aed">learned parameter</span></td></tr>
+<tr><td class="sym">\(x_{i}\)</td><td>The i-th token of a text sequence (x_1, ..., x_n).<div class=ground>&ldquo;Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.&rdquo;</div></td><td><span class="role" style="background:#0e74901a;color:#0e7490">input</span></td></tr>
+<tr><td class="sym">\(p_{\theta}(x_{i} \mid x_{&lt;i})\)</td><td>The model&#x27;s next-token distribution — the standard autoregressive language-modeling head.<div class=ground>&ldquo;Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.&rdquo;</div></td><td><span class="role" style="background:#b91c1c1a;color:#b91c1c">objective</span></td></tr>
+<tr><td class="sym">\(\lambda_{\text{LM}}, \lambda_{\text{flow}}\)</td><td>Per-modality loss weights in the mixture objective; the paper defaults to lambda_LM = 1.0.<div class=ground>&ldquo;...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0...&rdquo;</div></td><td><span class="role" style="background:#c2410c1a;color:#c2410c">hyperparameter</span></td></tr>
+<tr><td class="sym">\(z_{0}\)</td><td>Clean visual latent: an image or video frame mapped to latent tokens by a frozen visual encoder (note: in this paper z_0 is the CLEAN latent, not noise).<div class=ground>&ldquo;z_t = (1 - t) epsilon + t z_0 — so t = 1 recovers the clean latent z_0.&rdquo;</div></td><td><span class="role" style="background:#0e74901a;color:#0e7490">input</span></td></tr>
+<tr><td class="sym">\(\epsilon\)</td><td>Gaussian noise sample — the starting point the model learns to transport toward the clean latent.<div class=ground>&ldquo;z_t = (1 - t) epsilon + t z_0.&rdquo;</div></td><td><span class="role" style="background:#0e74901a;color:#0e7490">input</span></td></tr>
+<tr><td class="sym">\(z_{t}\)</td><td>Interpolated latent between noise and the clean latent at time t: z_t = (1 - t) epsilon + t z_0.<div class=ground>&ldquo;z_t = (1 - t) epsilon + t z_0.&rdquo;</div></td><td><span class="role" style="background:#0e74901a;color:#0e7490">input</span></td></tr>
+<tr><td class="sym">\(v_{\theta}(z_{t}, t, \cdot)\)</td><td>The transformer&#x27;s predicted velocity field at (z_t, t) given the multimodal context (the &#x27;·&#x27; is preceding tokens/frames).<div class=ground>&ldquo;The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.&rdquo;</div></td><td><span class="role" style="background:#1d4ed81a;color:#1d4ed8">output</span></td></tr>
+<tr><td class="sym">\((z_{0} - \epsilon)\)</td><td>True velocity: the constant direction of the straight path from noise to the clean latent.<div class=ground>&ldquo;The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.&rdquo;</div></td><td><span class="role" style="background:#b91c1c1a;color:#b91c1c">objective</span></td></tr>
+<tr><td class="sym">\(\lVert \cdot \rVert_{2}^{2}\)</td><td>Squared L2 error between predicted and true velocity — the flow-matching regression loss.<div class=ground>&ldquo;...and we minimize the squared error.&rdquo;</div></td><td><span class="role" style="background:#4d7c0f1a;color:#4d7c0f">normalization</span></td></tr></table>
+  </div>
+</section>
+<script type="application/json" id="spec">{"paper": {"arxiv_id": "2603.03276", "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining", "summary": "FAIR (Meta) + NYU study that trains a single decoder-only transformer from scratch on text and vision together (Transfusion-style), instead of bolting vision onto a pretrained LLM. Key findings: one semantic visual representation (RAE) suffices for both understanding and generation; vision and language data are complementary; world modeling emerges from general pretraining; MoE scales multimodal training efficiently.", "source_url": "https://arxiv.org/abs/2603.03276"}, "equation": {"id": "unified-objective", "name": "Unified multimodal training objective (language modeling + flow matching)", "equation_latex": "\\mathcal{L} \\;=\\; \\lambda_{\\text{LM}} \\Big[ -\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i}) \\Big] \\;+\\; \\lambda_{\\text{flow}} \\; \\mathbb{E}_{t, z_{0}, \\epsilon}\\Big[ \\lVert v_{\\theta}(z_{t}, t, \\cdot) - (z_{0} - \\epsilon) \\rVert_{2}^{2} \\Big]", "source": {"location": "Sec. 2.1 (Training and Inference), Eqs. (1)-(3) of the arXiv HTML; expanded by substituting Eqs. (1) and (2) into the mixture objective Eq. (3). LaTeX taken verbatim from the LaTeXML alttext, with the internal sum macro normalized.", "raw_context": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives: L = lambda_LM * L_LM + lambda_flow * L_flow, with weights chosen to stabilize joint training."}}, "symbol_map": [{"symbol": "\\theta", "meaning": "Parameters of the single shared decoder-only transformer, trained from scratch on both modalities at once.", "role": "learned_parameter", "grounding_sentence": "We train a single, autoregressive, decoder-only Transformer backbone from scratch (Sec. 2)."}, {"symbol": "x_{i}", "meaning": "The i-th token of a text sequence (x_1, ..., x_n).", "role": "input", "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."}, {"symbol": "p_{\\theta}(x_{i} \\mid x_{<i})", "meaning": "The model's next-token distribution — the standard autoregressive language-modeling head.", "role": "objective", "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."}, {"symbol": "\\lambda_{\\text{LM}}, \\lambda_{\\text{flow}}", "meaning": "Per-modality loss weights in the mixture objective; the paper defaults to lambda_LM = 1.0.", "role": "hyperparameter", "grounding_sentence": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0..."}, {"symbol": "z_{0}", "meaning": "Clean visual latent: an image or video frame mapped to latent tokens by a frozen visual encoder (note: in this paper z_0 is the CLEAN latent, not noise).", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0 — so t = 1 recovers the clean latent z_0."}, {"symbol": "\\epsilon", "meaning": "Gaussian noise sample — the starting point the model learns to transport toward the clean latent.", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."}, {"symbol": "z_{t}", "meaning": "Interpolated latent between noise and the clean latent at time t: z_t = (1 - t) epsilon + t z_0.", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."}, {"symbol": "v_{\\theta}(z_{t}, t, \\cdot)", "meaning": "The transformer's predicted velocity field at (z_t, t) given the multimodal context (the '·' is preceding tokens/frames).", "role": "output", "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."}, {"symbol": "(z_{0} - \\epsilon)", "meaning": "True velocity: the constant direction of the straight path from noise to the clean latent.", "role": "objective", "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."}, {"symbol": "\\lVert \\cdot \\rVert_{2}^{2}", "meaning": "Squared L2 error between predicted and true velocity — the flow-matching regression loss.", "role": "normalization", "grounding_sentence": "...and we minimize the squared error."}], "color_spans": [{"id": "lamlm", "latex_fragment": "\\lambda_{\\text{LM}}", "color": "#d97706", "label": "Text loss weight", "explanation": "How much the language grade counts. The paper pins this to 1.0 and tunes the vision weight around it."}, {"id": "lm", "latex_fragment": "-\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i})", "color": "#2563eb", "label": "Language modeling loss (Eq. 1)", "explanation": "Standard next-token prediction on text: for every position, how surprised was the model by the actual next token? Identical to how GPT-style LLMs are trained."}, {"id": "lamflow", "latex_fragment": "\\lambda_{\\text{flow}}", "color": "#0891b2", "label": "Vision loss weight", "explanation": "The knob balancing the vision objective against text, 'chosen to stabilize joint training'. Non-trivial because the paper finds vision is far more data-hungry than language."}, {"id": "exp", "latex_fragment": "\\mathbb{E}_{t, z_{0}, \\epsilon}", "color": "#059669", "label": "Average over noise & time", "explanation": "The vision loss is averaged over clean latents from the frozen encoder (z0), Gaussian noise draws (epsilon), and random interpolation times t — the model trains at every level of 'smudge'."}, {"id": "vpred", "latex_fragment": "v_{\\theta}(z_{t}, t, \\cdot)", "color": "#7c3aed", "label": "Predicted velocity (Eq. 2)", "explanation": "Given a partially-noised latent z_t, the time t, and the multimodal context, the same transformer predicts which direction to move the latent to make it a real image."}, {"id": "target", "latex_fragment": "(z_{0} - \\epsilon)", "color": "#dc2626", "label": "True velocity (target)", "explanation": "The straight-line direction from noise (epsilon) to the clean visual latent (z0) — the ground-truth answer the prediction is regressed against."}], "plain_english_explanation": "One transformer is graded by two teachers at once. The language teacher scores how well it predicts the next word in text (blue). The vision teacher hands it a partially-smudged image latent and scores how accurately it points back toward the clean image (purple prediction vs. red truth). Two knobs (amber, teal) set how much each grade counts. Training on both simultaneously — rather than starting from a finished LLM — is the paper's core experimental choice.", "intuitive_analogy": "A student enrolled in two classes with one brain (theta): a writing class — guess the next word of a passage — and a restoration class — shown a half-cleaned painting (z_t) and the clock (t), say which way each brushstroke should move (v_theta), graded against the restorer's true stroke (z0 − epsilon). The two lambdas are how much each class counts toward the final GPA. The paper's finding: taking both classes together makes you better at each than cramming either alone.", "callout_boxes": [{"anchor_span": "lm", "text": "Verbatim Eq. (1) of the paper: cross-entropy over next-token predictions — the exact objective LLMs use, kept as-is inside the joint loss."}, {"anchor_span": "lamlm", "text": "Fixed to 1.0 by default ('Unless otherwise specified, we use lambda_LM = 1.0'), making lambda_flow the single free balance knob."}, {"anchor_span": "lamflow", "text": "Weights are 'chosen to stabilize joint training'. Related finding: vision and language scale asymmetrically, and MoE helps harmonize the difference."}, {"anchor_span": "exp", "text": "z_t = (1−t)·epsilon + t·z_0 (paper's convention: z_0 is the CLEAN latent, epsilon the noise). Averaging over t trains the model at every noise level."}, {"anchor_span": "vpred", "text": "The 'v-pred' parameterization of Eq. (2). The paper also tests predicting the clean latent directly (x-pred) and finds x-pred works better with RAE representations."}, {"anchor_span": "target", "text": "Flow matching's target: the constant velocity of the straight path from noise to data. Matching it lets a 25-step Euler sampler generate images at inference."}], "source_quotes": [{"quote": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.", "location": "Sec. 2.1, before Eq. (1)", "supports": ["lm"]}, {"quote": "z_t = (1 - t) epsilon + t z_0. The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.", "location": "Sec. 2.1, before Eq. (2)", "supports": ["vpred", "target", "exp"]}, {"quote": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives.", "location": "Sec. 2.1, before Eq. (3)", "supports": ["lamlm", "lamflow"]}, {"quote": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0...", "location": "Sec. 2.1, after Eq. (3)", "supports": ["lamlm", "lamflow"]}], "confidence": {"score": 0.95, "notes": "Assembled from the paper's own Eqs. (1)-(3), extracted verbatim from the arXiv HTML LaTeXML alttext (extract_equations.py indices 1, 7, 11). Edits: substituted (1) and (2) into (3) for a single display, normalized the LaTeXML sum macro, dropped trailing punctuation. All grounding quotes are from the surrounding Sec. 2.1 prose."}}</script>
+<script>
+(function () {
+  var CALLOUTS = {"lm": "Verbatim Eq. (1) of the paper: cross-entropy over next-token predictions — the exact objective LLMs use, kept as-is inside the joint loss.", "lamlm": "Fixed to 1.0 by default ('Unless otherwise specified, we use lambda_LM = 1.0'), making lambda_flow the single free balance knob.", "lamflow": "Weights are 'chosen to stabilize joint training'. Related finding: vision and language scale asymmetrically, and MoE helps harmonize the difference.", "exp": "z_t = (1−t)·epsilon + t·z_0 (paper's convention: z_0 is the CLEAN latent, epsilon the noise). Averaging over t trains the model at every noise level.", "vpred": "The 'v-pred' parameterization of Eq. (2). The paper also tests predicting the clean latent directly (x-pred) and finds x-pred works better with RAE representations.", "target": "Flow matching's target: the constant velocity of the straight path from noise to data. Matching it lets a 25-step Euler sampler generate images at inference."};
+  var callout = document.getElementById('callout');
+  var connector = document.getElementById('callout-svg');
+  var center = document.getElementById('center');
+  var pinned = null;
+
+  function eqEls(id) { return document.querySelectorAll('.eqspan-' + id); }
+  function cards(id) { return document.querySelectorAll('[data-span="' + id + '"]'); }
+  function setHl(id, on) {
+    eqEls(id).forEach(function (e) { e.classList.toggle('hl', on); });
+    cards(id).forEach(function (e) { e.classList.toggle('hl', on); });
+  }
+  function showCallout(id) {
+    var target = eqEls(id)[0];
+    if (!target || !CALLOUTS[id]) { hideCallout(); return; }
+    callout.textContent = CALLOUTS[id];
+    callout.style.display = 'block';
+    var cr = center.getBoundingClientRect(), tr = target.getBoundingClientRect();
+    var top = tr.bottom - cr.top + 14;
+    var left = Math.max(8, Math.min(tr.left - cr.left, center.clientWidth - 340));
+    callout.style.top = top + 'px';
+    callout.style.left = left + 'px';
+    var line = connector.querySelector('line');
+    connector.style.display = 'block';
+    connector.style.left = '0'; connector.style.top = '0';
+    connector.setAttribute('width', center.clientWidth); connector.setAttribute('height', center.clientHeight);
+    line.setAttribute('x1', tr.left - cr.left + tr.width / 2);
+    line.setAttribute('y1', tr.bottom - cr.top + 2);
+    line.setAttribute('x2', left + 30);
+    line.setAttribute('y2', top);
+  }
+  function hideCallout() { callout.style.display = 'none'; connector.style.display = 'none'; }
+  function enter(id) { return function () { if (!pinned) { setHl(id, true); showCallout(id); } }; }
+  function leave(id) { return function () { if (!pinned) { setHl(id, false); hideCallout(); } }; }
+  function click(id) {
+    return function (ev) {
+      ev.stopPropagation();
+      if (pinned === id) { pinned = null; setHl(id, false); hideCallout(); return; }
+      if (pinned) setHl(pinned, false);
+      pinned = id; setHl(id, true); showCallout(id);
+    };
+  }
+  function bind(el, id) {
+    el.addEventListener('mouseenter', enter(id));
+    el.addEventListener('mouseleave', leave(id));
+    el.addEventListener('click', click(id));
+  }
+  function init() {
+    document.querySelectorAll('[data-span]').forEach(function (el) { bind(el, el.getAttribute('data-span')); });
+    document.querySelectorAll('[class*="eqspan-"]').forEach(function (el) {
+      var m = el.className.baseVal !== undefined ? null : el.className.match(/eqspan-([a-z0-9_-]+)/);
+      if (m) bind(el, m[1]);
+    });
+    document.body.addEventListener('click', function () {
+      if (pinned) { setHl(pinned, false); hideCallout(); pinned = null; }
+    });
+  }
+  // window.MathJax starts life as our config object; startup appears once the async
+  // CDN script loads, so poll rather than checking immediately
+  var tries = 0;
+  (function waitForMathJax() {
+    if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+      MathJax.startup.promise.then(init);
+    } else if (++tries < 50) {
+      setTimeout(waitForMathJax, 200);
+    } else {
+      document.getElementById('fallback').style.display = 'block';
+      init();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Equation Explainer Spec",
+  "description": "Structured output of the equation-understanding skill; sole input to the equation-visualizer renderer.",
+  "type": "object",
+  "required": ["paper", "equation", "symbol_map", "color_spans", "plain_english_explanation", "source_quotes", "confidence"],
+  "properties": {
+    "paper": {
+      "type": "object",
+      "required": ["arxiv_id", "title"],
+      "properties": {
+        "arxiv_id": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string", "description": "Abstract or short summary shown in the left pane." },
+        "source_url": { "type": "string" }
+      }
+    },
+    "equation": {
+      "type": "object",
+      "required": ["equation_latex"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "Human name, e.g. 'Unified training objective'." },
+        "equation_latex": { "type": "string", "description": "Display LaTeX, without \\[ \\] delimiters." },
+        "source": {
+          "type": "object",
+          "properties": {
+            "location": { "type": "string", "description": "Where in the paper, e.g. 'Sec. 3.2, Eq. (4)' or 'reconstructed from overview'." },
+            "raw_context": { "type": "string", "description": "Surrounding prose from the paper." }
+          }
+        }
+      }
+    },
+    "symbol_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["symbol", "meaning", "role"],
+        "properties": {
+          "symbol": { "type": "string", "description": "LaTeX for the symbol, e.g. \\lambda" },
+          "meaning": { "type": "string", "description": "What it refers to in THIS paper." },
+          "role": { "enum": ["input", "learned_parameter", "objective", "constraint", "normalization", "hyperparameter", "index", "operator", "output"] },
+          "grounding_sentence": { "type": "string", "description": "Paper sentence justifying this reading." }
+        }
+      }
+    },
+    "color_spans": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "latex_fragment", "color", "label", "explanation"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+          "latex_fragment": { "type": "string", "description": "Verbatim, non-overlapping substring of equation_latex." },
+          "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+          "label": { "type": "string" },
+          "explanation": { "type": "string", "description": "Simple-English reading of this piece; right pane card body." }
+        }
+      }
+    },
+    "plain_english_explanation": { "type": "string" },
+    "intuitive_analogy": { "type": "string" },
+    "callout_boxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["anchor_span", "text"],
+        "properties": {
+          "anchor_span": { "type": "string", "description": "A color_spans[].id" },
+          "text": { "type": "string", "description": "Hover callout, 1-3 sentences." }
+        }
+      }
+    },
+    "source_quotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["quote"],
+        "properties": {
+          "quote": { "type": "string", "description": "Verbatim sentence(s) from the fetched paper text." },
+          "location": { "type": "string" },
+          "supports": { "type": "array", "items": { "type": "string" }, "description": "Span ids this quote justifies." }
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "required": ["score"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string", "description": "What was read verbatim vs. reconstructed; what would raise the score." }
+      }
+    }
+  }
+}
