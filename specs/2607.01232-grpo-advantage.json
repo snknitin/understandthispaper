@@ -1,0 +1,126 @@
+{
+  "paper": {
+    "arxiv_id": "2607.01232",
+    "title": "Is One Layer Enough? Training A Single Transformer Layer Can Match Full-Parameter RL Training",
+    "summary": "Reinforcement learning (RL) has become a central component of post-training large language models (LLMs), yet little is understood about how RL adaptation is distributed across transformer layers. Existing approaches typically update all model parameters uniformly, implicitly assuming that every layer contributes similarly to the gains obtained during RL post-training. The authors challenge this assumption through a systematic layer-wise study of RL training and find that training a single transformer layer can recover most of the gains achieved by full-parameter RL training, and in some cases even surpass it. To quantify this phenomenon they introduce the 'layer contribution' metric, C(k). Across seven models spanning two model families (Qwen3, Qwen2.5), three RL algorithms (GRPO, GiGPO, Dr. GRPO), and multiple task domains, RL gains are highly concentrated in a small subset of, and in many cases even a single, transformer layer -- typically located in the middle of the stack.",
+    "source_url": "https://arxiv.org/abs/2607.01232"
+  },
+  "equation": {
+    "id": "grpo-advantage",
+    "name": "Eq. (1) — GRPO group-normalized advantage",
+    "equation_latex": "\\hat{A}_{i}=\\frac{r(x,y_{i})-\\text{mean}(\\{r(x,y_{j})\\}_{j=1}^{G})}{\\text{std}(\\{r(x,y_{j})\\}_{j=1}^{G})}",
+    "source": {
+      "location": "Sec. 2.1, Eq. (1)",
+      "raw_context": "In this work, we adopt Group Relative Policy Optimization (GRPO) [Shao et al., 2024], which estimates advantages without a learned value network. For each prompt x, GRPO samples a group of G responses {y_1, ..., y_G} from the current policy and computes a group-normalized advantage for each response."
+    }
+  },
+  "symbol_map": [
+    {
+      "symbol": "\\hat{A}_{i}",
+      "meaning": "The advantage assigned to response y_i: how much better (or worse) this response's reward is than the average reward of its sampled group, in units of the group's standard deviation. GRPO uses this instead of a learned value network.",
+      "role": "output",
+      "grounding_sentence": "we adopt Group Relative Policy Optimization (GRPO) [Shao et al., 2024], which estimates advantages without a learned value network ... and computes a group-normalized advantage for each response."
+    },
+    {
+      "symbol": "r(x,y)",
+      "meaning": "The reward function: a binary signal based on whether the response's answer is correct (verifiable rewards).",
+      "role": "input",
+      "grounding_sentence": "the model generates a response y ~ pi_theta(.|x), which is evaluated by a reward function r(x, y) that returns a binary signal based on answer correctness."
+    },
+    {
+      "symbol": "x",
+      "meaning": "The prompt given to the language model.",
+      "role": "input",
+      "grounding_sentence": "Given a prompt x, the model generates a response y ~ pi_theta(.|x)."
+    },
+    {
+      "symbol": "y_{i}",
+      "meaning": "The i-th of the G responses sampled from the current policy for prompt x.",
+      "role": "input",
+      "grounding_sentence": "For each prompt x, GRPO samples a group of G responses {y_1, ..., y_G} from the current policy."
+    },
+    {
+      "symbol": "G",
+      "meaning": "The group size: how many responses are sampled per prompt to form the comparison group.",
+      "role": "hyperparameter",
+      "grounding_sentence": "GRPO samples a group of G responses {y_1, ..., y_G} from the current policy."
+    },
+    {
+      "symbol": "\\text{mean},\\ \\text{std}",
+      "meaning": "Mean and standard deviation of the G rewards in the group; subtracting the mean and dividing by the std normalizes each reward relative to its group.",
+      "role": "normalization",
+      "grounding_sentence": "computes a group-normalized advantage for each response."
+    }
+  ],
+  "color_spans": [
+    {
+      "id": "advantage",
+      "latex_fragment": "\\hat{A}_{i}",
+      "color": "#2563eb",
+      "label": "Advantage of response i",
+      "explanation": "The quantity this equation defines: a per-response score saying how much better response i did than its groupmates. It replaces the learned value network that other RL algorithms (like PPO) need."
+    },
+    {
+      "id": "reward",
+      "latex_fragment": "r(x,y_{i})",
+      "color": "#059669",
+      "label": "This response's reward",
+      "explanation": "The raw reward for response i: a binary correct/incorrect signal from an automatic answer checker (verifiable reward)."
+    },
+    {
+      "id": "groupmean",
+      "latex_fragment": "\\text{mean}(\\{r(x,y_{j})\\}_{j=1}^{G})",
+      "color": "#d97706",
+      "label": "Group average (baseline)",
+      "explanation": "The average reward across all G responses sampled for the same prompt. Subtracting it centers the score: only doing better than your groupmates counts as positive."
+    },
+    {
+      "id": "groupstd",
+      "latex_fragment": "\\text{std}(\\{r(x,y_{j})\\}_{j=1}^{G})",
+      "color": "#7c3aed",
+      "label": "Group spread (normalizer)",
+      "explanation": "The standard deviation of the group's rewards. Dividing by it rescales the advantage so prompts where responses vary wildly and prompts where they barely differ produce comparable learning signals."
+    }
+  ],
+  "plain_english_explanation": "For each prompt, the model generates G candidate answers, and each gets a binary reward for correctness. Instead of learning a separate 'critic' network to judge how good each answer is, GRPO grades each answer against its own siblings: take this answer's reward, subtract the group's average reward, and divide by the group's standard deviation. The result, A-hat_i, is positive if the answer beat its groupmates and negative if it lagged them, expressed in comparable units across prompts of very different difficulty.",
+  "intuitive_analogy": "It's grading on a curve. A student's raw exam score (the reward) means little on its own -- what matters is how far above or below the class average they landed (subtract the mean), measured in units of how spread out the class was (divide by the std). An 80 in a class averaging 50 is a triumph; the same 80 in a class averaging 95 is a warning sign. Each group of G sampled responses is the 'class' for that prompt.",
+  "callout_boxes": [
+    {
+      "anchor_span": "advantage",
+      "text": "This is the learning signal that flows into the GRPO objective (Eq. 2): responses with positive advantage get reinforced, negative ones get suppressed."
+    },
+    {
+      "anchor_span": "reward",
+      "text": "In this paper rewards are verifiable: an automatic checker (e.g. Math-Verify for math answers) returns a binary correct/incorrect signal, so no human labeling or reward model is needed."
+    },
+    {
+      "anchor_span": "groupmean",
+      "text": "Using the group's own mean as the baseline is what makes GRPO 'group relative' -- it removes the need for a learned value network to estimate how good a typical response is."
+    },
+    {
+      "anchor_span": "groupstd",
+      "text": "Dividing by the group's standard deviation completes the normalization, putting advantages from easy and hard prompts on the same scale."
+    }
+  ],
+  "source_quotes": [
+    {
+      "quote": "In this work, we adopt Group Relative Policy Optimization (GRPO) [Shao et al., 2024], which estimates advantages without a learned value network.",
+      "location": "Sec. 2.1",
+      "supports": ["advantage", "groupmean"]
+    },
+    {
+      "quote": "For each prompt x, GRPO samples a group of G responses {y_1, ..., y_G} from the current policy and computes a group-normalized advantage for each response.",
+      "location": "Sec. 2.1, preceding Eq. (1)",
+      "supports": ["advantage", "groupmean", "groupstd"]
+    },
+    {
+      "quote": "Given a prompt x, the model generates a response y ~ pi_theta(.|x), which is evaluated by a reward function r(x, y) that returns a binary signal based on answer correctness.",
+      "location": "Sec. 2.1",
+      "supports": ["reward"]
+    }
+  ],
+  "confidence": {
+    "score": 0.95,
+    "notes": "Equation LaTeX read verbatim from the arXiv HTML (LaTeXML alttext). Every symbol is defined explicitly in the two sentences immediately preceding Eq. (1). This is standard GRPO machinery adopted from Shao et al. 2024, restated by the paper, so interpretations carry essentially no inference."
+  }
+}

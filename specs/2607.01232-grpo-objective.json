@@ -1,0 +1,165 @@
+{
+  "paper": {
+    "arxiv_id": "2607.01232",
+    "title": "Is One Layer Enough? Training A Single Transformer Layer Can Match Full-Parameter RL Training",
+    "summary": "Reinforcement learning (RL) has become a central component of post-training large language models (LLMs), yet little is understood about how RL adaptation is distributed across transformer layers. Existing approaches typically update all model parameters uniformly, implicitly assuming that every layer contributes similarly to the gains obtained during RL post-training. The authors challenge this assumption through a systematic layer-wise study of RL training and find that training a single transformer layer can recover most of the gains achieved by full-parameter RL training, and in some cases even surpass it. To quantify this phenomenon they introduce the 'layer contribution' metric, C(k). Across seven models spanning two model families (Qwen3, Qwen2.5), three RL algorithms (GRPO, GiGPO, Dr. GRPO), and multiple task domains, RL gains are highly concentrated in a small subset of, and in many cases even a single, transformer layer -- typically located in the middle of the stack.",
+    "source_url": "https://arxiv.org/abs/2607.01232"
+  },
+  "equation": {
+    "id": "grpo-objective",
+    "name": "Eq. (2) — GRPO clipped objective",
+    "equation_latex": "\\mathcal{L}_{\\text{GRPO}}(\\theta)=\\mathbb{E}_{x,\\{y_{i}\\}}\\left[\\frac{1}{G}\\sum_{i=1}^{G}\\left(\\min\\left(\\rho_{i}\\hat{A}_{i},\\;\\text{clip}(\\rho_{i},1-\\epsilon,1+\\epsilon)\\hat{A}_{i}\\right)-\\beta\\,\\mathbb{D}_{\\mathrm{KL}}\\!\\left[\\pi_{\\theta}\\,\\|\\,\\pi_{\\text{ref}}\\right]\\right)\\right]",
+    "source": {
+      "location": "Sec. 2.1, Eq. (2)",
+      "raw_context": "The policy is then updated by maximizing a clipped surrogate objective: [Eq. (2)] where rho_i = pi_theta(y_i|x)/pi_theta_old(y_i|x) is the importance sampling ratio."
+    }
+  },
+  "symbol_map": [
+    {
+      "symbol": "\\mathcal{L}_{\\text{GRPO}}(\\theta)",
+      "meaning": "The GRPO training objective, a function of the policy parameters theta. Training maximizes it; every gradient in the paper (full-parameter or single-layer) is a gradient of this quantity.",
+      "role": "objective",
+      "grounding_sentence": "The policy is then updated by maximizing a clipped surrogate objective."
+    },
+    {
+      "symbol": "\\theta",
+      "meaning": "The full set of policy (language model) parameters: all transformer layers, the embedding parameters, and the language model head.",
+      "role": "learned_parameter",
+      "grounding_sentence": "standard full-parameter GRPO updates all parameters jointly by computing the gradient over the full parameter set theta = {theta_emb, theta_0, ..., theta_{L-1}, theta_head}."
+    },
+    {
+      "symbol": "\\rho_{i}",
+      "meaning": "The importance sampling ratio for response i: the probability the current policy assigns to y_i divided by the probability the old (data-collecting) policy assigned to it.",
+      "role": "input",
+      "grounding_sentence": "where rho_i = pi_theta(y_i|x)/pi_theta_old(y_i|x) is the importance sampling ratio."
+    },
+    {
+      "symbol": "\\hat{A}_{i}",
+      "meaning": "The group-normalized advantage of response i, computed by Eq. (1).",
+      "role": "input",
+      "grounding_sentence": "GRPO ... computes a group-normalized advantage for each response [Eq. (1)]."
+    },
+    {
+      "symbol": "\\epsilon",
+      "meaning": "The clip range: how far the importance ratio may move from 1 before its effect on the objective is capped.",
+      "role": "hyperparameter",
+      "grounding_sentence": "all configurations, including full-parameter and single-layer, use identical hyperparameters for every other setting (batch size, KL coefficient, clip range, number of epochs)."
+    },
+    {
+      "symbol": "\\beta",
+      "meaning": "The KL coefficient weighting the KL-divergence penalty that keeps the trained policy close to the reference policy (the paper uses 0.001).",
+      "role": "hyperparameter",
+      "grounding_sentence": "Hyperparameters table: 'KL Coefficient 0.001'; identical across full-parameter and single-layer runs."
+    },
+    {
+      "symbol": "\\pi_{\\theta},\\ \\pi_{\\text{ref}}",
+      "meaning": "The policy being trained, and the frozen reference policy the KL penalty anchors it to (standard GRPO regularization; the paper states the KL coefficient but does not restate the reference-policy definition inline).",
+      "role": "constraint",
+      "grounding_sentence": "we adopt Group Relative Policy Optimization (GRPO) [Shao et al., 2024] (reference-policy KL regularization is part of the adopted GRPO formulation)."
+    },
+    {
+      "symbol": "G",
+      "meaning": "Group size: the number of sampled responses per prompt being averaged over.",
+      "role": "hyperparameter",
+      "grounding_sentence": "For each prompt x, GRPO samples a group of G responses {y_1, ..., y_G} from the current policy."
+    }
+  ],
+  "color_spans": [
+    {
+      "id": "loss",
+      "latex_fragment": "\\mathcal{L}_{\\text{GRPO}}(\\theta)",
+      "color": "#dc2626",
+      "label": "The objective being maximized",
+      "explanation": "The single scalar the whole RL training run pushes uphill on. Both full-parameter training and the paper's single-layer training maximize exactly this -- they differ only in which parameters get updated."
+    },
+    {
+      "id": "expectation",
+      "latex_fragment": "\\mathbb{E}_{x,\\{y_{i}\\}}",
+      "color": "#0891b2",
+      "label": "Average over prompts & samples",
+      "explanation": "Expectation over training prompts x and the groups of responses {y_i} sampled for each -- in practice, an average over mini-batches of prompts and their sampled completions."
+    },
+    {
+      "id": "groupavg",
+      "latex_fragment": "\\frac{1}{G}\\sum_{i=1}^{G}",
+      "color": "#d97706",
+      "label": "Average over the group",
+      "explanation": "Each of the G sampled responses contributes one term; averaging makes the objective independent of the group size."
+    },
+    {
+      "id": "unclipped",
+      "latex_fragment": "\\rho_{i}\\hat{A}_{i}",
+      "color": "#2563eb",
+      "label": "Unclipped policy-gradient term",
+      "explanation": "The raw update signal: the importance ratio rho_i (how much more likely the current policy makes this response than the old one) times its advantage A-hat_i from Eq. (1)."
+    },
+    {
+      "id": "clipped",
+      "latex_fragment": "\\text{clip}(\\rho_{i},1-\\epsilon,1+\\epsilon)\\hat{A}_{i}",
+      "color": "#7c3aed",
+      "label": "Clipped safety version",
+      "explanation": "The same term but with the ratio clamped to [1-eps, 1+eps]. Taking the min of the clipped and unclipped versions stops the policy from moving too aggressively on any single response."
+    },
+    {
+      "id": "klterm",
+      "latex_fragment": "\\beta\\,\\mathbb{D}_{\\mathrm{KL}}\\!\\left[\\pi_{\\theta}\\,\\|\\,\\pi_{\\text{ref}}\\right]",
+      "color": "#059669",
+      "label": "KL leash to the reference model",
+      "explanation": "A penalty (weighted by beta) on how far the trained policy drifts from a frozen reference policy, preventing the model from forgetting its pretrained behavior while chasing reward."
+    }
+  ],
+  "plain_english_explanation": "This is the score that RL training maximizes. For each prompt, average over the G sampled responses; for each response, multiply how much likelier the new policy makes it (the ratio rho_i) by how good it was relative to its group (the advantage from Eq. 1). To keep updates stable, the ratio is also computed in a clipped form and the smaller (more pessimistic) of the two is used, so no single response can yank the policy too far in one step. Finally, a KL penalty, weighted by beta, is subtracted to keep the trained model from drifting too far from a frozen reference model. The paper's central move is that this objective is held fixed while only the set of trainable parameters changes: full-parameter training updates all of theta, single-layer training updates just one layer.",
+  "intuitive_analogy": "Think of coaching a debate team after a scrimmage. Each debater (response) gets a grade relative to teammates (the advantage). You adjust your coaching emphasis toward what the high scorers did (the ratio-times-advantage term), but with a house rule: no single scrimmage can change your coaching by more than a fixed amount (the clip), and you must stay recognizably close to the playbook you started the season with (the KL leash to the reference model).",
+  "callout_boxes": [
+    {
+      "anchor_span": "loss",
+      "text": "Everything in the paper's single-layer experiments still optimizes this exact objective -- Eq. (3) just restricts which parameters receive its gradient."
+    },
+    {
+      "anchor_span": "unclipped",
+      "text": "rho_i = pi_theta(y_i|x) / pi_theta_old(y_i|x): a ratio above 1 means the current policy likes this response more than the policy that generated it did."
+    },
+    {
+      "anchor_span": "clipped",
+      "text": "Taking min(unclipped, clipped) is PPO's pessimistic trick: when the ratio strays outside [1-eps, 1+eps], the gradient through it is cut off, capping the incentive to over-update."
+    },
+    {
+      "anchor_span": "klterm",
+      "text": "The paper trains with a KL coefficient of 0.001, identical across full-parameter and single-layer runs, so the comparison between them is not confounded by regularization strength."
+    },
+    {
+      "anchor_span": "groupavg",
+      "text": "The group structure is what ties Eq. (2) back to Eq. (1): advantages are only meaningful relative to the same group being averaged here."
+    },
+    {
+      "anchor_span": "expectation",
+      "text": "In implementation this expectation is a mini-batch average over prompts and their G sampled completions."
+    }
+  ],
+  "source_quotes": [
+    {
+      "quote": "The policy is then updated by maximizing a clipped surrogate objective.",
+      "location": "Sec. 2.1, preceding Eq. (2)",
+      "supports": ["loss", "clipped"]
+    },
+    {
+      "quote": "where rho_i = pi_theta(y_i|x)/pi_theta_old(y_i|x) is the importance sampling ratio.",
+      "location": "Sec. 2.1, following Eq. (2)",
+      "supports": ["unclipped"]
+    },
+    {
+      "quote": "all configurations, including full-parameter and single-layer, use identical hyperparameters for every other setting (batch size, KL coefficient, clip range, number of epochs) and are trained to convergence.",
+      "location": "Sec. 3.1",
+      "supports": ["klterm", "clipped"]
+    },
+    {
+      "quote": "For each prompt x, GRPO samples a group of G responses {y_1, ..., y_G} from the current policy and computes a group-normalized advantage for each response.",
+      "location": "Sec. 2.1",
+      "supports": ["groupavg", "expectation"]
+    }
+  ],
+  "confidence": {
+    "score": 0.85,
+    "notes": "Equation LaTeX read verbatim from the arXiv HTML (LaTeXML alttext) -- note the HTML version includes the KL term -beta*D_KL[pi_theta || pi_ref], which the PDF rendering of Eq. (2) omits; the HTML is treated as authoritative. rho_i, the clipping, and the group structure are grounded in adjacent prose. The KL term's reference policy pi_ref is NOT re-defined in this paper's prose (it is standard GRPO from Shao et al. 2024), so that span's reading is partly inference; beta is grounded only via the hyperparameter table ('KL Coefficient 0.001'). Re-grounding pi_ref against the cited GRPO paper would raise the score."
+  }
+}

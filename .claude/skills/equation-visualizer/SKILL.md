@@ -12,12 +12,20 @@ reproducible, and keeps the renderer's code out of context (you only run it).
 ## Usage
 
 ```bash
+# one equation — no tabs
 python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<file>.json -o output/<name>.html
+# multiple equations from the same paper — one page with a tab per equation
+python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<eq1>.json specs/<eq2>.json specs/<eq3>.json -o output/<name>.html
 ```
 
-Input: a spec conforming to `../equation-understanding/spec.schema.json`.
+Input: one or more specs conforming to `../equation-understanding/spec.schema.json`
+(one spec per equation; paper title/summary in the header come from the first spec, so
+pass specs in the paper's equation order).
 Output: a standalone HTML file (MathJax from CDN; no build step, no server needed —
-opening the file directly works).
+opening the file directly works). With multiple specs, a tab bar appears under the
+header; each tab holds the full four-pane layout for that equation, labelled with
+`equation.name`. Span ids are namespaced per tab automatically, so ids may repeat
+across specs.
 
 ## What it renders
 
