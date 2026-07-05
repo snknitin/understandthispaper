@@ -1,0 +1,159 @@
+{
+  "paper": {
+    "arxiv_id": "2603.03276",
+    "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining",
+    "summary": "FAIR (Meta) + NYU study that trains a single decoder-only transformer from scratch on text and vision together (Transfusion-style), instead of bolting vision onto a pretrained LLM. Key findings: one semantic visual representation (RAE) suffices for both understanding and generation; vision and language data are complementary; world modeling emerges from general pretraining; MoE scales multimodal training efficiently.",
+    "source_url": "https://arxiv.org/abs/2603.03276"
+  },
+  "equation": {
+    "id": "unified-objective",
+    "name": "Unified multimodal training objective (language modeling + flow matching)",
+    "equation_latex": "\\mathcal{L} \\;=\\; \\lambda_{\\text{LM}} \\Big[ -\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i}) \\Big] \\;+\\; \\lambda_{\\text{flow}} \\; \\mathbb{E}_{t, z_{0}, \\epsilon}\\Big[ \\lVert v_{\\theta}(z_{t}, t, \\cdot) - (z_{0} - \\epsilon) \\rVert_{2}^{2} \\Big]",
+    "source": {
+      "location": "Sec. 2.1 (Training and Inference), Eqs. (1)-(3) of the arXiv HTML; expanded by substituting Eqs. (1) and (2) into the mixture objective Eq. (3). LaTeX taken verbatim from the LaTeXML alttext, with the internal sum macro normalized.",
+      "raw_context": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives: L = lambda_LM * L_LM + lambda_flow * L_flow, with weights chosen to stabilize joint training."
+    }
+  },
+  "symbol_map": [
+    {
+      "symbol": "\\theta",
+      "meaning": "Parameters of the single shared decoder-only transformer, trained from scratch on both modalities at once.",
+      "role": "learned_parameter",
+      "grounding_sentence": "We train a single, autoregressive, decoder-only Transformer backbone from scratch (Sec. 2)."
+    },
+    {
+      "symbol": "x_{i}",
+      "meaning": "The i-th token of a text sequence (x_1, ..., x_n).",
+      "role": "input",
+      "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."
+    },
+    {
+      "symbol": "p_{\\theta}(x_{i} \\mid x_{<i})",
+      "meaning": "The model's next-token distribution — the standard autoregressive language-modeling head.",
+      "role": "objective",
+      "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."
+    },
+    {
+      "symbol": "\\lambda_{\\text{LM}}, \\lambda_{\\text{flow}}",
+      "meaning": "Per-modality loss weights in the mixture objective; the paper defaults to lambda_LM = 1.0.",
+      "role": "hyperparameter",
+      "grounding_sentence": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0..."
+    },
+    {
+      "symbol": "z_{0}",
+      "meaning": "Clean visual latent: an image or video frame mapped to latent tokens by a frozen visual encoder (note: in this paper z_0 is the CLEAN latent, not noise).",
+      "role": "input",
+      "grounding_sentence": "z_t = (1 - t) epsilon + t z_0 — so t = 1 recovers the clean latent z_0."
+    },
+    {
+      "symbol": "\\epsilon",
+      "meaning": "Gaussian noise sample — the starting point the model learns to transport toward the clean latent.",
+      "role": "input",
+      "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."
+    },
+    {
+      "symbol": "z_{t}",
+      "meaning": "Interpolated latent between noise and the clean latent at time t: z_t = (1 - t) epsilon + t z_0.",
+      "role": "input",
+      "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."
+    },
+    {
+      "symbol": "v_{\\theta}(z_{t}, t, \\cdot)",
+      "meaning": "The transformer's predicted velocity field at (z_t, t) given the multimodal context (the '·' is preceding tokens/frames).",
+      "role": "output",
+      "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."
+    },
+    {
+      "symbol": "(z_{0} - \\epsilon)",
+      "meaning": "True velocity: the constant direction of the straight path from noise to the clean latent.",
+      "role": "objective",
+      "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."
+    },
+    {
+      "symbol": "\\lVert \\cdot \\rVert_{2}^{2}",
+      "meaning": "Squared L2 error between predicted and true velocity — the flow-matching regression loss.",
+      "role": "normalization",
+      "grounding_sentence": "...and we minimize the squared error."
+    }
+  ],
+  "color_spans": [
+    {
+      "id": "lamlm",
+      "latex_fragment": "\\lambda_{\\text{LM}}",
+      "color": "#d97706",
+      "label": "Text loss weight",
+      "explanation": "How much the language grade counts. The paper pins this to 1.0 and tunes the vision weight around it."
+    },
+    {
+      "id": "lm",
+      "latex_fragment": "-\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i})",
+      "color": "#2563eb",
+      "label": "Language modeling loss (Eq. 1)",
+      "explanation": "Standard next-token prediction on text: for every position, how surprised was the model by the actual next token? Identical to how GPT-style LLMs are trained."
+    },
+    {
+      "id": "lamflow",
+      "latex_fragment": "\\lambda_{\\text{flow}}",
+      "color": "#0891b2",
+      "label": "Vision loss weight",
+      "explanation": "The knob balancing the vision objective against text, 'chosen to stabilize joint training'. Non-trivial because the paper finds vision is far more data-hungry than language."
+    },
+    {
+      "id": "exp",
+      "latex_fragment": "\\mathbb{E}_{t, z_{0}, \\epsilon}",
+      "color": "#059669",
+      "label": "Average over noise & time",
+      "explanation": "The vision loss is averaged over clean latents from the frozen encoder (z0), Gaussian noise draws (epsilon), and random interpolation times t — the model trains at every level of 'smudge'."
+    },
+    {
+      "id": "vpred",
+      "latex_fragment": "v_{\\theta}(z_{t}, t, \\cdot)",
+      "color": "#7c3aed",
+      "label": "Predicted velocity (Eq. 2)",
+      "explanation": "Given a partially-noised latent z_t, the time t, and the multimodal context, the same transformer predicts which direction to move the latent to make it a real image."
+    },
+    {
+      "id": "target",
+      "latex_fragment": "(z_{0} - \\epsilon)",
+      "color": "#dc2626",
+      "label": "True velocity (target)",
+      "explanation": "The straight-line direction from noise (epsilon) to the clean visual latent (z0) — the ground-truth answer the prediction is regressed against."
+    }
+  ],
+  "plain_english_explanation": "One transformer is graded by two teachers at once. The language teacher scores how well it predicts the next word in text (blue). The vision teacher hands it a partially-smudged image latent and scores how accurately it points back toward the clean image (purple prediction vs. red truth). Two knobs (amber, teal) set how much each grade counts. Training on both simultaneously — rather than starting from a finished LLM — is the paper's core experimental choice.",
+  "intuitive_analogy": "A student enrolled in two classes with one brain (theta): a writing class — guess the next word of a passage — and a restoration class — shown a half-cleaned painting (z_t) and the clock (t), say which way each brushstroke should move (v_theta), graded against the restorer's true stroke (z0 − epsilon). The two lambdas are how much each class counts toward the final GPA. The paper's finding: taking both classes together makes you better at each than cramming either alone.",
+  "callout_boxes": [
+    { "anchor_span": "lm", "text": "Verbatim Eq. (1) of the paper: cross-entropy over next-token predictions — the exact objective LLMs use, kept as-is inside the joint loss." },
+    { "anchor_span": "lamlm", "text": "Fixed to 1.0 by default ('Unless otherwise specified, we use lambda_LM = 1.0'), making lambda_flow the single free balance knob." },
+    { "anchor_span": "lamflow", "text": "Weights are 'chosen to stabilize joint training'. Related finding: vision and language scale asymmetrically, and MoE helps harmonize the difference." },
+    { "anchor_span": "exp", "text": "z_t = (1−t)·epsilon + t·z_0 (paper's convention: z_0 is the CLEAN latent, epsilon the noise). Averaging over t trains the model at every noise level." },
+    { "anchor_span": "vpred", "text": "The 'v-pred' parameterization of Eq. (2). The paper also tests predicting the clean latent directly (x-pred) and finds x-pred works better with RAE representations." },
+    { "anchor_span": "target", "text": "Flow matching's target: the constant velocity of the straight path from noise to data. Matching it lets a 25-step Euler sampler generate images at inference." }
+  ],
+  "source_quotes": [
+    {
+      "quote": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.",
+      "location": "Sec. 2.1, before Eq. (1)",
+      "supports": ["lm"]
+    },
+    {
+      "quote": "z_t = (1 - t) epsilon + t z_0. The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.",
+      "location": "Sec. 2.1, before Eq. (2)",
+      "supports": ["vpred", "target", "exp"]
+    },
+    {
+      "quote": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives.",
+      "location": "Sec. 2.1, before Eq. (3)",
+      "supports": ["lamlm", "lamflow"]
+    },
+    {
+      "quote": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0...",
+      "location": "Sec. 2.1, after Eq. (3)",
+      "supports": ["lamlm", "lamflow"]
+    }
+  ],
+  "confidence": {
+    "score": 0.95,
+    "notes": "Assembled from the paper's own Eqs. (1)-(3), extracted verbatim from the arXiv HTML LaTeXML alttext (extract_equations.py indices 1, 7, 11). Edits: substituted (1) and (2) into (3) for a single display, normalized the LaTeXML sum macro, dropped trailing punctuation. All grounding quotes are from the surrounding Sec. 2.1 prose."
+  }
+}
