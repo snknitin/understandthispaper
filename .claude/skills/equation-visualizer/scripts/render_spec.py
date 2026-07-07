@@ -162,16 +162,18 @@ window.MathJax = {
   #eqtabs button:hover:not(.active) { background:#e2e8f0; }
   .eqpanel { display:none; }
   .eqpanel.active { display:block; }
-  main { display:grid; grid-template-columns: 300px 1fr 340px; gap:16px; padding:16px 24px; align-items:start; }
+  /* stretch (default) keeps the three panes equal height — no holes between sections */
+  main { display:grid; grid-template-columns: 300px 1fr 340px; gap:16px; padding:16px 24px; }
   .pane { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; min-width:0; }
   .pane h2 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   .left-pane .summary { font-size:13.5px; line-height:1.55; color:#374151; }
   .left-pane .srcbox { margin-top:12px; background:#0f172a; color:#e2e8f0; border-radius:8px; padding:10px 12px;
                   font-family:ui-monospace, Consolas, monospace; font-size:11.5px; white-space:pre-wrap; word-break:break-word; }
   .left-pane .loc { margin-top:8px; font-size:12px; color:var(--muted); }
-  .center-pane { position:relative; }
+  .center-pane { position:relative; display:flex; flex-direction:column; }
+  .center-pane .aside { margin-top:auto; }  /* pin Plain English to the pane bottom */
   .eqname { font-size:15px; font-weight:600; margin-bottom:6px; }
-  .equation { padding:28px 8px; overflow-x:auto; }
+  .equation { padding:28px 8px; overflow-x:auto; margin:auto 0; }  /* center in spare space */
   .center-pane .hint { font-size:12px; color:var(--muted); text-align:center; }
   [class*="eqspan-"] { border-radius:4px; padding:1px 2px; cursor:pointer; transition: background .12s, box-shadow .12s; }
   [class*="eqspan-"].hl { background:#fef9c3; box-shadow:0 0 0 2px #fde047; }
@@ -201,6 +203,12 @@ window.MathJax = {
   .callout { position:absolute; display:none; max-width:320px; background:#111827; color:#f9fafb; font-size:12.5px; line-height:1.5; padding:10px 12px; border-radius:8px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); }
   .callout-svg { position:absolute; overflow:visible; pointer-events:none; z-index:49; display:none; }
   #fallback { display:none; margin:8px 24px 0; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:12.5px; color:#991b1b; }
+  .relgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+  .rel { display:block; border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-decoration:none; color:inherit; transition: box-shadow .12s, border-color .12s; }
+  .rel:hover { border-color:#93c5fd; box-shadow:0 2px 10px rgba(37,99,235,.10); }
+  .rel-title { font-weight:600; font-size:13.5px; color:#1d4ed8; line-height:1.4; }
+  .rel-meta { margin-top:3px; font-size:11.5px; color:var(--muted); }
+  .rel-sum { margin-top:6px; font-size:12px; line-height:1.5; color:#374151; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   @media (max-width: 1100px) { main { grid-template-columns:1fr; } }
 __SPAN_CSS__
 </style>
@@ -213,6 +221,7 @@ __SPAN_CSS__
 __TABS__
 <div id="fallback">MathJax failed to load (offline?). The raw LaTeX in each left pane is the source of truth.</div>
 __PANELS__
+__RELATED__
 <script type="application/json" id="spec">__SPEC_JSON__</script>
 <script>
 (function () {
@@ -367,6 +376,31 @@ def build_panel(spec: dict, idx: int, active: bool, warn) -> str:
     )
 
 
+def build_related(related: list) -> str:
+    """Static 'Related papers' section from hf_related.sh output (page-level: the HF
+    API's CORS policy blocks client-side fetches, so this is embedded at build time)."""
+    if not related:
+        return ""
+    cards = []
+    for r in related:
+        year = (r.get("publishedAt") or "")[:4]
+        upvotes = r.get("upvotes")
+        meta = " · ".join(x for x in [
+            f"arXiv:{r['id']}", year,
+            f"&#9650; {upvotes}" if isinstance(upvotes, int) and upvotes > 0 else "",
+        ] if x)
+        summary = esc(r.get("summary", ""))
+        cards.append(
+            f'<a class="rel" href="https://huggingface.co/papers/{esc(r["id"])}" target="_blank" rel="noopener">'
+            f'<div class="rel-title">{esc(r["title"])}</div>'
+            f'<div class="rel-meta">{meta}</div>'
+            f'{f"<div class=rel-sum>{summary}</div>" if summary else ""}</a>'
+        )
+    return ('<section class="bottom"><div class="pane">'
+            '<h2>Related papers &middot; Hugging Face Papers</h2>'
+            '<div class="relgrid">' + "\n".join(cards) + "</div></div></section>")
+
+
 def build_tabs(specs) -> str:
     if len(specs) < 2:
         return ""
@@ -387,7 +421,16 @@ def main() -> int:
     ap.add_argument("specs", type=Path, nargs="+",
                     help="one spec JSON per equation; multiple specs (same paper) render as tabs")
     ap.add_argument("-o", "--out", type=Path, default=Path("output/demo.html"))
+    ap.add_argument("--related", type=Path, default=None,
+                    help="related.json from hf_related.sh; adds a 'Related papers' section")
     args = ap.parse_args()
+
+    related = []
+    if args.related:
+        if args.related.exists():
+            related = json.loads(args.related.read_text(encoding="utf-8"))
+        else:
+            print(f"warning: --related file not found: {args.related}", file=sys.stderr)
 
     warnings = []
     raw_specs = [json.loads(p.read_text(encoding="utf-8")) for p in args.specs]
@@ -408,6 +451,7 @@ def main() -> int:
         .replace("__SOURCE_URL__", esc(paper.get("source_url", f"https://arxiv.org/abs/{paper['arxiv_id']}")))
         .replace("__TABS__", build_tabs(specs))
         .replace("__PANELS__", "\n".join(panels))
+        .replace("__RELATED__", build_related(related))
         .replace("__SPAN_CSS__", "\n".join(span_css))
         .replace("__CALLOUTS_JSON__", json.dumps(callouts, ensure_ascii=False).replace("</", "<\\/"))
         .replace("__SPEC_JSON__", json.dumps(embedded, ensure_ascii=False).replace("</", "<\\/"))
