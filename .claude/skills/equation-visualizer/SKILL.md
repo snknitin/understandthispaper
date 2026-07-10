@@ -16,6 +16,14 @@ reproducible, and keeps the renderer's code out of context (you only run it).
 python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<file>.json -o output/<name>.html
 # multiple equations from the same paper — one page with a tab per equation
 python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<eq1>.json specs/<eq2>.json specs/<eq3>.json -o output/<name>.html
+# add a "Related papers" section (see paper-fetch's hf_related.sh)
+python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<eq>.json --related workspace/papers/<id>/related.json -o output/<name>.html
+```
+
+Validate specs first — it is the hard gate between the LLM and the renderer:
+
+```bash
+python .claude/skills/equation-understanding/scripts/validate_spec.py specs/<file>.json ...
 ```
 
 Input: one or more specs conforming to `../equation-understanding/spec.schema.json`

@@ -43,3 +43,12 @@ Wraps `GET https://huggingface.co/api/papers/search?q=...` (there is no official
 papers CLI; this REST endpoint is the real thing) and prints `id<TAB>title` lines.
 Run one query per theme of the paper (architecture, representation, scaling, ...) for
 good coverage.
+
+For the rendered page's "Related papers" section, use:
+
+```bash
+bash .claude/skills/paper-fetch/scripts/hf_related.sh <id>   # -> workspace/papers/<id>/related.json
+```
+
+then pass `--related workspace/papers/<id>/related.json` to render_spec.py. This must
+run at build time — the HF API's CORS policy blocks client-side browser fetches.

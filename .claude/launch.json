@@ -12,6 +12,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8737", "--directory", "output"],
       "port": 8737
+    },
+    {
+      "name": "extension-viewer",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8741", "--directory", "extension"],
+      "port": 8741
     }
   ]
 }
