@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  body { width: 300px; margin: 0; padding: 14px; font-family: ui-sans-serif, system-ui, sans-serif; color: #111827; }
+  h1 { font-size: 14px; margin: 0 0 8px; }
+  button { width: 100%; padding: 9px 0; font: inherit; font-weight: 600; color: #fff; background: #2563eb;
+           border: none; border-radius: 8px; cursor: pointer; }
+  button:disabled { background: #93c5fd; cursor: default; }
+  #status { margin-top: 8px; font-size: 12.5px; color: #6b7280; min-height: 16px; }
+  #status.err { color: #b91c1c; }
+  .links { margin-top: 10px; font-size: 12px; display: flex; justify-content: space-between; }
+  .links a { color: #2563eb; text-decoration: none; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Understand This Paper</h1>
+<button id="explain">Explain equations on this page</button>
+<div id="status"></div>
+<div class="links">
+  <a id="opts">Settings (model &amp; key)</a>
+  <a id="demo">See a demo</a>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

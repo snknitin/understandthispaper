@@ -24,15 +24,22 @@ If only `fulltext.md` exists, grep for display math (`$$...$$`, `\[...\]`, `\beg
 If only the PDF exists, treat any recovered equation as low-confidence and say so in the
 spec's `confidence.notes`.
 
-## Step 2: Pick the equation
+## Step 2: Pick the equations (plural by default)
 
-Default to the paper's core equation — training objective, main theorem, headline
-formula — unless the user pointed at a specific one. Record the choice and where it
-appears (`equation.source.location`).
+Select the paper's **key equations, not just one** — typically 2-5: the headline/novel
+formula plus the load-bearing machinery around it (training objective, advantage or
+loss definitions, update rules, main theorem). Include an equation if the paper could
+not be understood without it; skip pure boilerplate (e.g. a standard softmax restated).
+If the user pointed at a specific equation, do only that one.
+
+Write **one spec JSON per equation** (`specs/<id>-<slug>.json` each); the visualizer
+accepts multiple specs and renders them as tabs on a single page. Give each spec a
+clear `equation.name` (used as the tab label, e.g. "Eq. (1) — GRPO advantage") and
+record where it appears (`equation.source.location`).
 
 ## Step 3: Ground every symbol (this is the point of the skill)
 
-For the chosen equation, answer from the paper text — not from generic math intuition:
+For each chosen equation, answer from the paper text — not from generic math intuition:
 
 1. **What does each symbol refer to in this paper?** (`symbol_map[].meaning`)
 2. **What role does it play?** One of: `input`, `learned_parameter`, `objective`,

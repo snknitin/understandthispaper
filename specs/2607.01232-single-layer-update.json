@@ -1,0 +1,130 @@
+{
+  "paper": {
+    "arxiv_id": "2607.01232",
+    "title": "Is One Layer Enough? Training A Single Transformer Layer Can Match Full-Parameter RL Training",
+    "summary": "Reinforcement learning (RL) has become a central component of post-training large language models (LLMs), yet little is understood about how RL adaptation is distributed across transformer layers. Existing approaches typically update all model parameters uniformly, implicitly assuming that every layer contributes similarly to the gains obtained during RL post-training. The authors challenge this assumption through a systematic layer-wise study of RL training and find that training a single transformer layer can recover most of the gains achieved by full-parameter RL training, and in some cases even surpass it. To quantify this phenomenon they introduce the 'layer contribution' metric, C(k). Across seven models spanning two model families (Qwen3, Qwen2.5), three RL algorithms (GRPO, GiGPO, Dr. GRPO), and multiple task domains, RL gains are highly concentrated in a small subset of, and in many cases even a single, transformer layer -- typically located in the middle of the stack.",
+    "source_url": "https://arxiv.org/abs/2607.01232"
+  },
+  "equation": {
+    "id": "single-layer-update",
+    "name": "Eq. (3) — Single-layer update rule",
+    "equation_latex": "\\theta_{k}\\leftarrow\\theta_{k}-\\alpha\\,\\nabla_{\\theta_{k}}\\mathcal{L}_{\\text{GRPO}}(\\theta),\\quad\\text{all other parameters frozen.}",
+    "source": {
+      "location": "Sec. 2.2, Eq. (3)",
+      "raw_context": "In our single-layer training framework, we instead isolate a single layer theta_k and update only its parameters: [Eq. (3)]. Note that the gradient is computed via backpropagation through the full network, so it depends on all layers; only the parameter update is restricted to layer k. In practice, this is implemented in PyTorch by setting requires_grad=False for all parameters except those in the target layer theta_k."
+    }
+  },
+  "symbol_map": [
+    {
+      "symbol": "\\theta_{k}",
+      "meaning": "The parameters of the single transformer layer k selected for training; the only parameters that change during the run.",
+      "role": "learned_parameter",
+      "grounding_sentence": "In our single-layer training framework, we instead isolate a single layer theta_k and update only its parameters."
+    },
+    {
+      "symbol": "\\alpha",
+      "meaning": "The learning rate; the paper reuses the learning rate tuned for the full-parameter baseline for all single-layer runs, so no layer gets an unfair advantage from tuning.",
+      "role": "hyperparameter",
+      "grounding_sentence": "we tune the learning rate for the full-parameter baseline and select the value that yields the best [result] ... [and apply the same] tuned learning rate to all single-layer training runs, so that no layer receives an unfair advantage or disadvantage from the learning rate choice."
+    },
+    {
+      "symbol": "\\nabla_{\\theta_{k}}\\mathcal{L}_{\\text{GRPO}}(\\theta)",
+      "meaning": "The gradient of the full GRPO objective with respect to layer k's parameters only -- computed by backpropagation through the entire network, so it depends on all layers, but applied only to layer k.",
+      "role": "operator",
+      "grounding_sentence": "Note that the gradient is computed via backpropagation through the full network, so it depends on all layers; only the parameter update is restricted to layer k."
+    },
+    {
+      "symbol": "\\mathcal{L}_{\\text{GRPO}}(\\theta)",
+      "meaning": "The GRPO clipped surrogate objective of Eq. (2), unchanged -- single-layer training optimizes the same objective as full-parameter training.",
+      "role": "objective",
+      "grounding_sentence": "The policy is then updated by maximizing a clipped surrogate objective [Eq. (2)]."
+    },
+    {
+      "symbol": "k",
+      "meaning": "The index of the chosen layer; the procedure is repeated independently for every layer k in {0, ..., L-1} to measure each layer's contribution.",
+      "role": "index",
+      "grounding_sentence": "This procedure is repeated independently for every layer k in {0, ..., L-1}, isolating each layer's ability to absorb RL-induced improvement."
+    }
+  ],
+  "color_spans": [
+    {
+      "id": "target",
+      "latex_fragment": "\\theta_{k}\\leftarrow\\theta_{k}",
+      "color": "#2563eb",
+      "label": "Only layer k gets updated",
+      "explanation": "The assignment arrow: layer k's weights are overwritten with their new value. No other weights appear on the left-hand side -- this is the entire experimental intervention of the paper."
+    },
+    {
+      "id": "lr",
+      "latex_fragment": "\\alpha\\,",
+      "color": "#d97706",
+      "label": "Step size (learning rate)",
+      "explanation": "How far to step along the gradient. Crucially, it is the same learning rate that was tuned for the full-parameter baseline, reused for every single-layer run to keep the comparison fair."
+    },
+    {
+      "id": "gradient",
+      "latex_fragment": "\\nabla_{\\theta_{k}}\\mathcal{L}_{\\text{GRPO}}(\\theta)",
+      "color": "#7c3aed",
+      "label": "Gradient through the full network",
+      "explanation": "The slope of the GRPO objective with respect to layer k's weights. Backpropagation still flows through every layer -- the gradient 'sees' the whole model -- but only layer k's slice of it is used."
+    },
+    {
+      "id": "frozen",
+      "latex_fragment": "\\text{all other parameters frozen.}",
+      "color": "#059669",
+      "label": "Everything else frozen",
+      "explanation": "Embeddings, the LM head, and all other transformer layers keep their pretrained values (requires_grad=False in PyTorch). This isolation is what lets the paper attribute any performance gain to layer k alone."
+    }
+  ],
+  "plain_english_explanation": "This is ordinary gradient ascent on the GRPO objective with one restriction: only the weights of a single chosen transformer layer, layer k, are allowed to move; every other parameter -- embeddings, the language model head, and all remaining layers -- stays exactly at its pretrained value. The gradient itself is still computed by backpropagating through the whole network, so it accounts for how all the frozen layers process information; the freeze only applies to the update step. Repeating this experiment once per layer, for every layer in the model, produces the per-layer scores S_k that feed the layer contribution metric C(k) in Eq. (4).",
+  "intuitive_analogy": "Imagine a relay team where you're only allowed to coach one runner. The team still runs the full race every time (backprop through the whole network), and you watch the complete race to decide your feedback (the gradient depends on all layers) -- but only your assigned runner gets to adjust their technique (only theta_k updates); everyone else must run exactly as before (frozen). By coaching each runner in separate seasons and comparing team times, you learn which single runner's improvement matters most.",
+  "callout_boxes": [
+    {
+      "anchor_span": "target",
+      "text": "This one-line change from standard training -- restricting the update to a single layer -- is the paper's entire experimental knob. Everything else (objective, data, hyperparameters) is held identical to the full-parameter baseline."
+    },
+    {
+      "anchor_span": "lr",
+      "text": "The learning rate is tuned once for the full-parameter baseline and then reused unchanged for all single-layer runs; an ablation (Appendix A.7) checks that re-tuning it per layer does not change the conclusions."
+    },
+    {
+      "anchor_span": "gradient",
+      "text": "Frozen does not mean invisible: backprop flows through all layers, so layer k's gradient reflects the whole network's behavior. Only the weight update is restricted."
+    },
+    {
+      "anchor_span": "frozen",
+      "text": "Implemented in PyTorch by setting requires_grad=False on every parameter except those of layer k -- including the embeddings and the language model head."
+    }
+  ],
+  "source_quotes": [
+    {
+      "quote": "In our single-layer training framework, we instead isolate a single layer theta_k and update only its parameters.",
+      "location": "Sec. 2.2, preceding Eq. (3)",
+      "supports": ["target", "frozen"]
+    },
+    {
+      "quote": "Note that the gradient is computed via backpropagation through the full network, so it depends on all layers; only the parameter update is restricted to layer k.",
+      "location": "Sec. 2.2, following Eq. (3)",
+      "supports": ["gradient"]
+    },
+    {
+      "quote": "In practice, this is implemented in PyTorch by setting requires_grad=False for all parameters except those in the target layer theta_k.",
+      "location": "Sec. 2.2",
+      "supports": ["frozen"]
+    },
+    {
+      "quote": "This procedure is repeated independently for every layer k in {0, ..., L-1}, isolating each layer's ability to absorb RL-induced improvement.",
+      "location": "Sec. 2.2",
+      "supports": ["target"]
+    },
+    {
+      "quote": "[We apply the same] tuned learning rate to all single-layer training runs, so that no layer receives an unfair advantage or disadvantage from the learning rate choice.",
+      "location": "Sec. 3.1",
+      "supports": ["lr"]
+    }
+  ],
+  "confidence": {
+    "score": 0.92,
+    "notes": "Equation LaTeX read verbatim from the arXiv HTML (LaTeXML alttext); every symbol is defined in the sentences immediately surrounding Eq. (3), including the subtle point that the gradient is computed through the full network. The learning-rate grounding comes from Sec. 3.1 rather than adjacent to the equation, and its quote is lightly paraphrased around a line break in the extracted text -- verifying it verbatim against the PDF would nudge the score up."
+  }
+}

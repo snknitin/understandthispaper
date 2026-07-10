@@ -21,17 +21,26 @@ window.MathJax = {
   header h1 { margin:0 0 4px; font-size:18px; }
   header .meta { color:var(--muted); font-size:13px; }
   header .meta a { color:#2563eb; text-decoration:none; }
-  main { display:grid; grid-template-columns: 300px 1fr 340px; gap:16px; padding:16px 24px; align-items:start; }
-  .pane { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  #eqtabs { display:flex; gap:8px; flex-wrap:wrap; padding:10px 24px 0; }
+  #eqtabs button { border:1px solid var(--border); border-bottom:none; background:#f1f5f9; color:#334155;
+                   font:inherit; font-size:13px; font-weight:600; padding:8px 16px; border-radius:8px 8px 0 0; cursor:pointer; }
+  #eqtabs button.active { background:var(--card); color:var(--ink); box-shadow:0 -2px 0 #2563eb inset; }
+  #eqtabs button:hover:not(.active) { background:#e2e8f0; }
+  .eqpanel { display:none; }
+  .eqpanel.active { display:block; }
+  /* stretch (default) keeps the three panes equal height — no holes between sections */
+  main { display:grid; grid-template-columns: 300px 1fr 340px; gap:16px; padding:16px 24px; }
+  .pane { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; min-width:0; }
   .pane h2 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-  #left .summary { font-size:13.5px; line-height:1.55; color:#374151; }
-  #left .srcbox { margin-top:12px; background:#0f172a; color:#e2e8f0; border-radius:8px; padding:10px 12px;
+  .left-pane .summary { font-size:13.5px; line-height:1.55; color:#374151; }
+  .left-pane .srcbox { margin-top:12px; background:#0f172a; color:#e2e8f0; border-radius:8px; padding:10px 12px;
                   font-family:ui-monospace, Consolas, monospace; font-size:11.5px; white-space:pre-wrap; word-break:break-word; }
-  #left .loc { margin-top:8px; font-size:12px; color:var(--muted); }
-  #center { position:relative; }
-  #eqname { font-size:15px; font-weight:600; margin-bottom:6px; }
-  #equation { padding:28px 8px; overflow-x:auto; }
-  #center .hint { font-size:12px; color:var(--muted); text-align:center; }
+  .left-pane .loc { margin-top:8px; font-size:12px; color:var(--muted); }
+  .center-pane { position:relative; display:flex; flex-direction:column; }
+  .center-pane .aside { margin-top:auto; }  /* pin Plain English to the pane bottom */
+  .eqname { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .equation { padding:28px 8px; overflow-x:auto; margin:auto 0; }  /* center in spare space */
+  .center-pane .hint { font-size:12px; color:var(--muted); text-align:center; }
   [class*="eqspan-"] { border-radius:4px; padding:1px 2px; cursor:pointer; transition: background .12s, box-shadow .12s; }
   [class*="eqspan-"].hl { background:#fef9c3; box-shadow:0 0 0 2px #fde047; }
   .card { border:1px solid var(--border); border-left-width:4px; border-radius:8px; padding:10px 12px; margin-bottom:10px; cursor:pointer; transition: background .12s, box-shadow .12s; }
@@ -42,24 +51,30 @@ window.MathJax = {
   .card-body { margin:6px 0 0; font-size:13px; line-height:1.5; color:#374151; }
   .aside { margin-top:14px; border-top:1px dashed var(--border); padding-top:12px; font-size:13px; line-height:1.55; color:#374151; }
   .aside .k { font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:block; margin-bottom:4px; }
-  #bottom { margin:0 24px 24px; }
-  #bottom blockquote { margin:0 0 10px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-left:4px solid #94a3b8; border-radius:8px; font-size:13px; line-height:1.55; }
+  .bottom { margin:0 24px 24px; }
+  .bottom blockquote { margin:0 0 10px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-left:4px solid #94a3b8; border-radius:8px; font-size:13px; line-height:1.55; }
   .qloc { color:var(--muted); font-size:12px; margin-left:6px; }
   .qtag { display:inline-block; margin-left:4px; padding:1px 7px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:11px; cursor:pointer; }
   .qtag.hl { background:#fde047; color:#713f12; }
-  #conf { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  #confbar { flex:0 0 220px; height:10px; border-radius:999px; background:#e5e7eb; overflow:hidden; }
-  #confbar>div { height:100%; border-radius:999px; background:linear-gradient(90deg,#f59e0b,#22c55e); }
-  #conf .num { font-weight:700; }
-  #conf .notes { font-size:12.5px; color:var(--muted); }
+  .conf { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .confbar { flex:0 0 220px; height:10px; border-radius:999px; background:#e5e7eb; overflow:hidden; }
+  .confbar>div { height:100%; border-radius:999px; background:linear-gradient(90deg,#f59e0b,#22c55e); }
+  .conf .num { font-weight:700; }
+  .conf .notes { font-size:12.5px; color:var(--muted); }
   table.symbols { width:100%; border-collapse:collapse; font-size:13px; margin-top:4px; }
   table.symbols td { border-top:1px solid var(--border); padding:8px 6px; vertical-align:top; }
   td.sym { white-space:nowrap; font-size:14px; }
   .role { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; white-space:nowrap; }
   .ground { color:var(--muted); font-size:11.5px; margin-top:3px; font-style:italic; }
-  #callout { position:absolute; display:none; max-width:320px; background:#111827; color:#f9fafb; font-size:12.5px; line-height:1.5; padding:10px 12px; border-radius:8px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); }
-  #callout-svg { position:absolute; overflow:visible; pointer-events:none; z-index:49; display:none; }
-  #fallback { display:none; margin:8px 0 0; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:12.5px; color:#991b1b; }
+  .callout { position:absolute; display:none; max-width:320px; background:#111827; color:#f9fafb; font-size:12.5px; line-height:1.5; padding:10px 12px; border-radius:8px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .callout-svg { position:absolute; overflow:visible; pointer-events:none; z-index:49; display:none; }
+  #fallback { display:none; margin:8px 24px 0; padding:8px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:12.5px; color:#991b1b; }
+  .relgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+  .rel { display:block; border:1px solid var(--border); border-radius:8px; padding:10px 12px; text-decoration:none; color:inherit; transition: box-shadow .12s, border-color .12s; }
+  .rel:hover { border-color:#93c5fd; box-shadow:0 2px 10px rgba(37,99,235,.10); }
+  .rel-title { font-weight:600; font-size:13.5px; color:#1d4ed8; line-height:1.4; }
+  .rel-meta { margin-top:3px; font-size:11.5px; color:var(--muted); }
+  .rel-sum { margin-top:6px; font-size:12px; line-height:1.5; color:#374151; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   @media (max-width: 1100px) { main { grid-template-columns:1fr; } }
   .eqspan-lamlm { color: #d97706; }
   .card[data-span="lamlm"] { border-left-color: #d97706; }
@@ -80,24 +95,26 @@ window.MathJax = {
   <h1>Beyond Language Modeling: An Exploration of Multimodal Pretraining</h1>
   <div class="meta">arXiv:2603.03276 · <a href="https://arxiv.org/abs/2603.03276">https://arxiv.org/abs/2603.03276</a> · generated by equation-visualizer (deterministic renderer — the model wrote the <a href="#spec">spec</a>, not this page)</div>
 </header>
+
+<div id="fallback">MathJax failed to load (offline?). The raw LaTeX in each left pane is the source of truth.</div>
+<div class="eqpanel active" id="panel-0">
 <main>
-  <section class="pane" id="left">
+  <section class="pane left-pane">
     <h2>Paper &amp; source</h2>
     <div class="summary">FAIR (Meta) + NYU study that trains a single decoder-only transformer from scratch on text and vision together (Transfusion-style), instead of bolting vision onto a pretrained LLM. Key findings: one semantic visual representation (RAE) suffices for both understanding and generation; vision and language data are complementary; world modeling emerges from general pretraining; MoE scales multimodal training efficiently.</div>
     <div class="loc">Sec. 2.1 (Training and Inference), Eqs. (1)-(3) of the arXiv HTML; expanded by substituting Eqs. (1) and (2) into the mixture objective Eq. (3). LaTeX taken verbatim from the LaTeXML alttext, with the internal sum macro normalized.</div>
     <div class="srcbox">\mathcal{L} \;=\; \lambda_{\text{LM}} \Big[ -\sum_{i=1}^{n} \log p_{\theta}(x_{i} \mid x_{&lt;i}) \Big] \;+\; \lambda_{\text{flow}} \; \mathbb{E}_{t, z_{0}, \epsilon}\Big[ \lVert v_{\theta}(z_{t}, t, \cdot) - (z_{0} - \epsilon) \rVert_{2}^{2} \Big]</div>
-    <div id="fallback">MathJax failed to load (offline?). The raw LaTeX on the left is the source of truth.</div>
   </section>
-  <section class="pane" id="center">
+  <section class="pane center-pane">
     <h2>Equation</h2>
-    <div id="eqname">Unified multimodal training objective (language modeling + flow matching)</div>
-    <div id="equation">\[\mathcal{L} \;=\; \class{eqspan-lamlm}{\lambda_{\text{LM}}} \Big[ \class{eqspan-lm}{-\sum_{i=1}^{n} \log p_{\theta}(x_{i} \mid x_{&lt;i})} \Big] \;+\; \class{eqspan-lamflow}{\lambda_{\text{flow}}} \; \class{eqspan-exp}{\mathbb{E}_{t, z_{0}, \epsilon}}\Big[ \lVert \class{eqspan-vpred}{v_{\theta}(z_{t}, t, \cdot)} - \class{eqspan-target}{(z_{0} - \epsilon)} \rVert_{2}^{2} \Big]\]</div>
+    <div class="eqname">Unified multimodal training objective (language modeling + flow matching)</div>
+    <div class="equation">\[\mathcal{L} \;=\; \class{eqspan-lamlm}{\lambda_{\text{LM}}} \Big[ \class{eqspan-lm}{-\sum_{i=1}^{n} \log p_{\theta}(x_{i} \mid x_{&lt;i})} \Big] \;+\; \class{eqspan-lamflow}{\lambda_{\text{flow}}} \; \class{eqspan-exp}{\mathbb{E}_{t, z_{0}, \epsilon}}\Big[ \lVert \class{eqspan-vpred}{v_{\theta}(z_{t}, t, \cdot)} - \class{eqspan-target}{(z_{0} - \epsilon)} \rVert_{2}^{2} \Big]\]</div>
     <div class="hint">hover or click any colored piece — or a card on the right</div>
     <div class="aside"><span class="k">Plain English</span>One transformer is graded by two teachers at once. The language teacher scores how well it predicts the next word in text (blue). The vision teacher hands it a partially-smudged image latent and scores how accurately it points back toward the clean image (purple prediction vs. red truth). Two knobs (amber, teal) set how much each grade counts. Training on both simultaneously — rather than starting from a finished LLM — is the paper&#x27;s core experimental choice.</div>
-    <svg id="callout-svg"><line x1="0" y1="0" x2="0" y2="0" stroke="#111827" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
-    <div id="callout"></div>
+    <svg class="callout-svg"><line x1="0" y1="0" x2="0" y2="0" stroke="#111827" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+    <div class="callout"></div>
   </section>
-  <section class="pane" id="right">
+  <section class="pane right-pane">
     <h2>What each color means</h2>
     <div class="card" data-span="lamlm" tabindex="0"><div class="card-head"><span class="chip" style="background:#d97706"></span><span class="card-label">Text loss weight</span></div><p class="card-body">How much the language grade counts. The paper pins this to 1.0 and tunes the vision weight around it.</p></div>
 <div class="card" data-span="lm" tabindex="0"><div class="card-head"><span class="chip" style="background:#2563eb"></span><span class="card-label">Language modeling loss (Eq. 1)</span></div><p class="card-body">Standard next-token prediction on text: for every position, how surprised was the model by the actual next token? Identical to how GPT-style LLMs are trained.</p></div>
@@ -108,11 +125,11 @@ window.MathJax = {
     <div class="aside"><span class="k">Intuition</span>A student enrolled in two classes with one brain (theta): a writing class — guess the next word of a passage — and a restoration class — shown a half-cleaned painting (z_t) and the clock (t), say which way each brushstroke should move (v_theta), graded against the restorer&#x27;s true stroke (z0 − epsilon). The two lambdas are how much each class counts toward the final GPA. The paper&#x27;s finding: taking both classes together makes you better at each than cramming either alone.</div>
   </section>
 </main>
-<section id="bottom">
+<section class="bottom">
   <div class="pane">
     <h2>Why the model reads it this way (grounding)</h2>
-    <div id="conf">
-      <div id="confbar"><div style="width:95%"></div></div>
+    <div class="conf">
+      <div class="confbar"><div style="width:95%"></div></div>
       <span class="num">0.95</span>
       <span class="notes">Assembled from the paper&#x27;s own Eqs. (1)-(3), extracted verbatim from the arXiv HTML LaTeXML alttext (extract_equations.py indices 1, 7, 11). Edits: substituted (1) and (2) into (3) for a single display, normalized the LaTeXML sum macro, dropped trailing punctuation. All grounding quotes are from the surrounding Sec. 2.1 prose.</span>
     </div>
@@ -133,13 +150,19 @@ window.MathJax = {
 <tr><td class="sym">\(\lVert \cdot \rVert_{2}^{2}\)</td><td>Squared L2 error between predicted and true velocity — the flow-matching regression loss.<div class=ground>&ldquo;...and we minimize the squared error.&rdquo;</div></td><td><span class="role" style="background:#4d7c0f1a;color:#4d7c0f">normalization</span></td></tr></table>
   </div>
 </section>
+</div>
+<section class="bottom"><div class="pane"><h2>Related papers &middot; Hugging Face Papers</h2><div class="relgrid"><a class="rel" href="https://huggingface.co/papers/2202.10936" target="_blank" rel="noopener"><div class="rel-title">A Survey of Vision-Language Pre-Trained Models</div><div class="rel-meta">arXiv:2202.10936 · 2022</div><div class=rel-sum>As transformer evolves, pre-trained models have advanced at a breakneck pace in recent years. They have dominated the mainstream techniques in natural language processing (NLP) and computer vision (CV). How to adapt pre-training to the field of Vision-and-Language (V-L) learning </div></a>
+<a class="rel" href="https://huggingface.co/papers/2202.01374" target="_blank" rel="noopener"><div class="rel-title">mSLAM: Massively multilingual joint pre-training for speech and text</div><div class="rel-meta">arXiv:2202.01374 · 2022 · &#9650; 2</div><div class=rel-sum>We present mSLAM, a multilingual Speech and LAnguage Model that learns cross-lingual cross-modal representations of speech and text by pre-training jointly on large amounts of unlabeled speech and text in multiple languages. mSLAM combines w2v-BERT pre-training on speech with Spa</div></a>
+<a class="rel" href="https://huggingface.co/papers/2404.10710" target="_blank" rel="noopener"><div class="rel-title">Dual Modalities of Text: Visual and Textual Generative Pre-training</div><div class="rel-meta">arXiv:2404.10710 · 2024 · &#9650; 2</div><div class=rel-sum>Harnessing visual texts represents a burgeoning frontier in the evolution of language modeling. In this paper, we introduce a novel pre-training framework for a suite of pixel-based autoregressive language models, pre-training on a corpus of over 400 million documents rendered as</div></a>
+<a class="rel" href="https://huggingface.co/papers/2304.07880" target="_blank" rel="noopener"><div class="rel-title">Sabiá: Portuguese Large Language Models</div><div class="rel-meta">arXiv:2304.07880 · 2023 · &#9650; 4</div><div class=rel-sum>As the capabilities of language models continue to advance, it is conceivable that &quot;one-size-fits-all&quot; model will remain as the main paradigm. For instance, given the vast number of languages worldwide, many of which are low-resource, the prevalent practice is to pretrain a singl</div></a>
+<a class="rel" href="https://huggingface.co/papers/2503.13383" target="_blank" rel="noopener"><div class="rel-title">Cream of the Crop: Harvesting Rich, Scalable and Transferable Multi-Modal Data for Instruction Fine-Tuning</div><div class="rel-meta">arXiv:2503.13383 · 2025</div><div class=rel-sum>The hypothesis that pretrained large language models (LLMs) necessitate only minimal supervision during the fine-tuning (SFT) stage (Zhou et al., 2024) has been substantiated by recent advancements in data curation and selection research. However, their stability and generalizabi</div></a>
+<a class="rel" href="https://huggingface.co/papers/2311.18765" target="_blank" rel="noopener"><div class="rel-title">MLLMs-Augmented Visual-Language Representation Learning</div><div class="rel-meta">arXiv:2311.18765 · 2023 · &#9650; 1</div><div class=rel-sum>Visual-language pre-training (VLP) has achieved remarkable success in multi-modal tasks, largely attributed to the availability of large-scale image-text datasets. In this work, we demonstrate that multi-modal large language models (MLLMs) can enhance visual-language representati</div></a>
+<a class="rel" href="https://huggingface.co/papers/2405.16789" target="_blank" rel="noopener"><div class="rel-title">NoteLLM-2: Multimodal Large Representation Models for Recommendation</div><div class="rel-meta">arXiv:2405.16789 · 2024</div><div class=rel-sum>Large Language Models (LLMs) have demonstrated exceptional text understanding. Existing works explore their application in text embedding tasks. However, there are few works utilizing LLMs to assist multimodal representation tasks. In this work, we investigate the potential of LL</div></a>
+<a class="rel" href="https://huggingface.co/papers/2410.14332" target="_blank" rel="noopener"><div class="rel-title">Croc: Pretraining Large Multimodal Models with Cross-Modal Comprehension</div><div class="rel-meta">arXiv:2410.14332 · 2024 · &#9650; 1</div><div class=rel-sum>Recent advances in Large Language Models (LLMs) have catalyzed the development of Large Multimodal Models (LMMs). However, existing research primarily focuses on tuning language and image instructions, ignoring the critical pretraining phase where models learn to process textual </div></a></div></div></section>
 <script type="application/json" id="spec">{"paper": {"arxiv_id": "2603.03276", "title": "Beyond Language Modeling: An Exploration of Multimodal Pretraining", "summary": "FAIR (Meta) + NYU study that trains a single decoder-only transformer from scratch on text and vision together (Transfusion-style), instead of bolting vision onto a pretrained LLM. Key findings: one semantic visual representation (RAE) suffices for both understanding and generation; vision and language data are complementary; world modeling emerges from general pretraining; MoE scales multimodal training efficiently.", "source_url": "https://arxiv.org/abs/2603.03276"}, "equation": {"id": "unified-objective", "name": "Unified multimodal training objective (language modeling + flow matching)", "equation_latex": "\\mathcal{L} \\;=\\; \\lambda_{\\text{LM}} \\Big[ -\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i}) \\Big] \\;+\\; \\lambda_{\\text{flow}} \\; \\mathbb{E}_{t, z_{0}, \\epsilon}\\Big[ \\lVert v_{\\theta}(z_{t}, t, \\cdot) - (z_{0} - \\epsilon) \\rVert_{2}^{2} \\Big]", "source": {"location": "Sec. 2.1 (Training and Inference), Eqs. (1)-(3) of the arXiv HTML; expanded by substituting Eqs. (1) and (2) into the mixture objective Eq. (3). LaTeX taken verbatim from the LaTeXML alttext, with the internal sum macro normalized.", "raw_context": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives: L = lambda_LM * L_LM + lambda_flow * L_flow, with weights chosen to stabilize joint training."}}, "symbol_map": [{"symbol": "\\theta", "meaning": "Parameters of the single shared decoder-only transformer, trained from scratch on both modalities at once.", "role": "learned_parameter", "grounding_sentence": "We train a single, autoregressive, decoder-only Transformer backbone from scratch (Sec. 2)."}, {"symbol": "x_{i}", "meaning": "The i-th token of a text sequence (x_1, ..., x_n).", "role": "input", "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."}, {"symbol": "p_{\\theta}(x_{i} \\mid x_{<i})", "meaning": "The model's next-token distribution — the standard autoregressive language-modeling head.", "role": "objective", "grounding_sentence": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy."}, {"symbol": "\\lambda_{\\text{LM}}, \\lambda_{\\text{flow}}", "meaning": "Per-modality loss weights in the mixture objective; the paper defaults to lambda_LM = 1.0.", "role": "hyperparameter", "grounding_sentence": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0..."}, {"symbol": "z_{0}", "meaning": "Clean visual latent: an image or video frame mapped to latent tokens by a frozen visual encoder (note: in this paper z_0 is the CLEAN latent, not noise).", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0 — so t = 1 recovers the clean latent z_0."}, {"symbol": "\\epsilon", "meaning": "Gaussian noise sample — the starting point the model learns to transport toward the clean latent.", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."}, {"symbol": "z_{t}", "meaning": "Interpolated latent between noise and the clean latent at time t: z_t = (1 - t) epsilon + t z_0.", "role": "input", "grounding_sentence": "z_t = (1 - t) epsilon + t z_0."}, {"symbol": "v_{\\theta}(z_{t}, t, \\cdot)", "meaning": "The transformer's predicted velocity field at (z_t, t) given the multimodal context (the '·' is preceding tokens/frames).", "role": "output", "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."}, {"symbol": "(z_{0} - \\epsilon)", "meaning": "True velocity: the constant direction of the straight path from noise to the clean latent.", "role": "objective", "grounding_sentence": "The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error."}, {"symbol": "\\lVert \\cdot \\rVert_{2}^{2}", "meaning": "Squared L2 error between predicted and true velocity — the flow-matching regression loss.", "role": "normalization", "grounding_sentence": "...and we minimize the squared error."}], "color_spans": [{"id": "lamlm", "latex_fragment": "\\lambda_{\\text{LM}}", "color": "#d97706", "label": "Text loss weight", "explanation": "How much the language grade counts. The paper pins this to 1.0 and tunes the vision weight around it."}, {"id": "lm", "latex_fragment": "-\\sum_{i=1}^{n} \\log p_{\\theta}(x_{i} \\mid x_{<i})", "color": "#2563eb", "label": "Language modeling loss (Eq. 1)", "explanation": "Standard next-token prediction on text: for every position, how surprised was the model by the actual next token? Identical to how GPT-style LLMs are trained."}, {"id": "lamflow", "latex_fragment": "\\lambda_{\\text{flow}}", "color": "#0891b2", "label": "Vision loss weight", "explanation": "The knob balancing the vision objective against text, 'chosen to stabilize joint training'. Non-trivial because the paper finds vision is far more data-hungry than language."}, {"id": "exp", "latex_fragment": "\\mathbb{E}_{t, z_{0}, \\epsilon}", "color": "#059669", "label": "Average over noise & time", "explanation": "The vision loss is averaged over clean latents from the frozen encoder (z0), Gaussian noise draws (epsilon), and random interpolation times t — the model trains at every level of 'smudge'."}, {"id": "vpred", "latex_fragment": "v_{\\theta}(z_{t}, t, \\cdot)", "color": "#7c3aed", "label": "Predicted velocity (Eq. 2)", "explanation": "Given a partially-noised latent z_t, the time t, and the multimodal context, the same transformer predicts which direction to move the latent to make it a real image."}, {"id": "target", "latex_fragment": "(z_{0} - \\epsilon)", "color": "#dc2626", "label": "True velocity (target)", "explanation": "The straight-line direction from noise (epsilon) to the clean visual latent (z0) — the ground-truth answer the prediction is regressed against."}], "plain_english_explanation": "One transformer is graded by two teachers at once. The language teacher scores how well it predicts the next word in text (blue). The vision teacher hands it a partially-smudged image latent and scores how accurately it points back toward the clean image (purple prediction vs. red truth). Two knobs (amber, teal) set how much each grade counts. Training on both simultaneously — rather than starting from a finished LLM — is the paper's core experimental choice.", "intuitive_analogy": "A student enrolled in two classes with one brain (theta): a writing class — guess the next word of a passage — and a restoration class — shown a half-cleaned painting (z_t) and the clock (t), say which way each brushstroke should move (v_theta), graded against the restorer's true stroke (z0 − epsilon). The two lambdas are how much each class counts toward the final GPA. The paper's finding: taking both classes together makes you better at each than cramming either alone.", "callout_boxes": [{"anchor_span": "lm", "text": "Verbatim Eq. (1) of the paper: cross-entropy over next-token predictions — the exact objective LLMs use, kept as-is inside the joint loss."}, {"anchor_span": "lamlm", "text": "Fixed to 1.0 by default ('Unless otherwise specified, we use lambda_LM = 1.0'), making lambda_flow the single free balance knob."}, {"anchor_span": "lamflow", "text": "Weights are 'chosen to stabilize joint training'. Related finding: vision and language scale asymmetrically, and MoE helps harmonize the difference."}, {"anchor_span": "exp", "text": "z_t = (1−t)·epsilon + t·z_0 (paper's convention: z_0 is the CLEAN latent, epsilon the noise). Averaging over t trains the model at every noise level."}, {"anchor_span": "vpred", "text": "The 'v-pred' parameterization of Eq. (2). The paper also tests predicting the clean latent directly (x-pred) and finds x-pred works better with RAE representations."}, {"anchor_span": "target", "text": "Flow matching's target: the constant velocity of the straight path from noise to data. Matching it lets a 25-step Euler sampler generate images at inference."}], "source_quotes": [{"quote": "Given a text sequence (x_1, ..., x_n), we minimize standard autoregressive cross-entropy.", "location": "Sec. 2.1, before Eq. (1)", "supports": ["lm"]}, {"quote": "z_t = (1 - t) epsilon + t z_0. The model predicts a velocity field v_theta(z_t, t, context) and we minimize the squared error.", "location": "Sec. 2.1, before Eq. (2)", "supports": ["vpred", "target", "exp"]}, {"quote": "Mixture training. Each batch contains a mixture of examples drawn from several sources (text-only, video-only, paired image-text, and action-conditioned data). We optimize a weighted combination of objectives.", "location": "Sec. 2.1, before Eq. (3)", "supports": ["lamlm", "lamflow"]}, {"quote": "...with weights chosen to stabilize joint training. Unless otherwise specified, we use lambda_LM = 1.0...", "location": "Sec. 2.1, after Eq. (3)", "supports": ["lamlm", "lamflow"]}], "confidence": {"score": 0.95, "notes": "Assembled from the paper's own Eqs. (1)-(3), extracted verbatim from the arXiv HTML LaTeXML alttext (extract_equations.py indices 1, 7, 11). Edits: substituted (1) and (2) into (3) for a single display, normalized the LaTeXML sum macro, dropped trailing punctuation. All grounding quotes are from the surrounding Sec. 2.1 prose."}}</script>
 <script>
 (function () {
   var CALLOUTS = {"lm": "Verbatim Eq. (1) of the paper: cross-entropy over next-token predictions — the exact objective LLMs use, kept as-is inside the joint loss.", "lamlm": "Fixed to 1.0 by default ('Unless otherwise specified, we use lambda_LM = 1.0'), making lambda_flow the single free balance knob.", "lamflow": "Weights are 'chosen to stabilize joint training'. Related finding: vision and language scale asymmetrically, and MoE helps harmonize the difference.", "exp": "z_t = (1−t)·epsilon + t·z_0 (paper's convention: z_0 is the CLEAN latent, epsilon the noise). Averaging over t trains the model at every noise level.", "vpred": "The 'v-pred' parameterization of Eq. (2). The paper also tests predicting the clean latent directly (x-pred) and finds x-pred works better with RAE representations.", "target": "Flow matching's target: the constant velocity of the straight path from noise to data. Matching it lets a 25-step Euler sampler generate images at inference."};
-  var callout = document.getElementById('callout');
-  var connector = document.getElementById('callout-svg');
-  var center = document.getElementById('center');
   var pinned = null;
 
   function eqEls(id) { return document.querySelectorAll('.eqspan-' + id); }
@@ -148,9 +171,17 @@ window.MathJax = {
     eqEls(id).forEach(function (e) { e.classList.toggle('hl', on); });
     cards(id).forEach(function (e) { e.classList.toggle('hl', on); });
   }
+  function hideCallout() {
+    document.querySelectorAll('.callout').forEach(function (e) { e.style.display = 'none'; });
+    document.querySelectorAll('.callout-svg').forEach(function (e) { e.style.display = 'none'; });
+  }
   function showCallout(id) {
     var target = eqEls(id)[0];
-    if (!target || !CALLOUTS[id]) { hideCallout(); return; }
+    var panel = target && target.closest('.eqpanel');
+    if (!target || !panel || !CALLOUTS[id]) { hideCallout(); return; }
+    var center = panel.querySelector('.center-pane');
+    var callout = panel.querySelector('.callout');
+    var connector = panel.querySelector('.callout-svg');
     callout.textContent = CALLOUTS[id];
     callout.style.display = 'block';
     var cr = center.getBoundingClientRect(), tr = target.getBoundingClientRect();
@@ -167,7 +198,6 @@ window.MathJax = {
     line.setAttribute('x2', left + 30);
     line.setAttribute('y2', top);
   }
-  function hideCallout() { callout.style.display = 'none'; connector.style.display = 'none'; }
   function enter(id) { return function () { if (!pinned) { setHl(id, true); showCallout(id); } }; }
   function leave(id) { return function () { if (!pinned) { setHl(id, false); hideCallout(); } }; }
   function click(id) {
@@ -183,16 +213,37 @@ window.MathJax = {
     el.addEventListener('mouseleave', leave(id));
     el.addEventListener('click', click(id));
   }
+  function unpin() {
+    if (pinned) { setHl(pinned, false); pinned = null; }
+    hideCallout();
+  }
+  function initTabs() {
+    var buttons = document.querySelectorAll('#eqtabs button');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        unpin();
+        buttons.forEach(function (b) { b.classList.toggle('active', b === btn); });
+        document.querySelectorAll('.eqpanel').forEach(function (p) {
+          p.classList.toggle('active', p.id === 'panel-' + btn.getAttribute('data-panel'));
+        });
+        // hidden-while-typeset panels can have stale measurements; nudge MathJax once
+        if (window.MathJax && MathJax.typesetPromise && !btn.dataset.retypeset) {
+          btn.dataset.retypeset = '1';
+          MathJax.typesetPromise([document.getElementById('panel-' + btn.getAttribute('data-panel'))]).catch(function () {});
+        }
+      });
+    });
+  }
   function init() {
     document.querySelectorAll('[data-span]').forEach(function (el) { bind(el, el.getAttribute('data-span')); });
     document.querySelectorAll('[class*="eqspan-"]').forEach(function (el) {
       var m = el.className.baseVal !== undefined ? null : el.className.match(/eqspan-([a-z0-9_-]+)/);
       if (m) bind(el, m[1]);
     });
-    document.body.addEventListener('click', function () {
-      if (pinned) { setHl(pinned, false); hideCallout(); pinned = null; }
-    });
+    document.body.addEventListener('click', unpin);
   }
+  initTabs();
   // window.MathJax starts life as our config object; startup appears once the async
   // CDN script loads, so poll rather than checking immediately
   var tries = 0;

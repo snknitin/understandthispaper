@@ -25,25 +25,30 @@ renderer script produces the HTML.
      `.claude/skills/equation-understanding/scripts/extract_equations.py workspace/papers/<id>/paper.html`
      to list block equations with surrounding prose.
    - Otherwise mine the alphaXiv full-text markdown for display math.
-   - Pick the core equation (training objective, main theorem, headline formula) unless
-     the user named a specific one.
+   - Pick the paper's **key equations — usually 2-5, not just one**: the headline/novel
+     formula plus the load-bearing machinery (training objective, advantage/loss
+     definitions, update rules, main theorem). Only do a single equation if the user
+     named a specific one. Skip boilerplate restatements of standard math.
 
-3. **Ground the equation** (equation-understanding skill)
+3. **Ground each equation** (equation-understanding skill)
    - Answer, from the paper text only: what does each symbol refer to *in this paper*?
      Which symbols are inputs, learned parameters, objectives, constraints,
      hyperparameters, normalization terms? Which nearby sentences justify each reading?
-   - Write a spec JSON to `specs/<id>-<slug>.json` conforming to
-     `.claude/skills/equation-understanding/spec.schema.json`. Every symbol_map entry
-     needs a grounding_sentence quoted or closely paraphrased from the fetched text.
-     Set `confidence` honestly and say what would raise it.
+   - Write **one spec JSON per equation** to `specs/<id>-<slug>.json`, each conforming
+     to `.claude/skills/equation-understanding/spec.schema.json`. Every symbol_map
+     entry needs a grounding_sentence quoted or closely paraphrased from the fetched
+     text. Set `confidence` honestly per equation and say what would raise it. Give
+     each spec a tab-ready `equation.name` like "Eq. (2) — GRPO objective".
 
 4. **Render deterministically** (equation-visualizer skill)
-   - Run `python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<file>.json -o output/<id>.html`.
+   - Run `python .claude/skills/equation-visualizer/scripts/render_spec.py specs/<eq1>.json specs/<eq2>.json ... -o output/<id>.html`,
+     passing all specs in paper order — the renderer produces one page with a tab per
+     equation (no tab bar when there's a single spec).
    - Do not hand-write the HTML. If the output looks wrong, fix the spec or the
      renderer, then re-run.
 
-5. **Report** — tell the user the output path, the equation chosen and why, the
-   confidence score, and any spans you could not ground.
+5. **Report** — tell the user the output path, the equations chosen and why, the
+   per-equation confidence scores, and any spans you could not ground.
 
 # Hard rules
 - Color spans must be non-overlapping verbatim substrings of `equation_latex`.
